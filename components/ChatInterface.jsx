@@ -1,12 +1,15 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { Send, Menu, X, Phone, Video } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function ChatInterface() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [message, setMessage] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const router = useRouter();
 
   const doctors = [
     {
@@ -154,11 +157,13 @@ export default function ChatInterface() {
                     <Phone className="h-5 w-5" />
                   </button>
                   <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
-                    <Video className="h-5 w-5" />
+                    <Video
+                      onClick={() => router.push("call")}
+                      className="h-5 w-5"
+                    />
                   </button>
                 </div>
               </div>
-
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((msg) => (
                   <div
@@ -195,7 +200,7 @@ export default function ChatInterface() {
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="flex-1 focus:ring-sky-500 focus:border-sky-500 block w-full rounded-md sm:text-sm border-gray-300"
+                    className="flex-1 focus:ring-sky-500 focus:border-sky-500 block w-full rounded-md sm:text-sm border-gray-300 focus:outline-none"
                     placeholder="Type a message..."
                   />
                   <button

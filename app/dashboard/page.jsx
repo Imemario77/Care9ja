@@ -1,5 +1,5 @@
-import ClientDashboard from "@/component/ClientDashboard";
-import DoctorDashboard from "@/component/DoctorDashboard";
+import ClientDashboard from "@/components/ClientDashboard";
+import DoctorDashboard from "@/components/DoctorDashboard";
 import React from "react";
 
 function Dashboard() {
