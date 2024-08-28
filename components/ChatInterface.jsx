@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Send, Menu, X, Phone, Video } from "lucide-react";
+import { Send, Phone, Video, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function ChatInterface() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [message, setMessage] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const router = useRouter();
 
@@ -56,46 +56,21 @@ export default function ChatInterface() {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      // Here you would typically send the message to your backend
       console.log("Sending message:", message);
       setMessage("");
     }
   };
 
+  const handleDoctorSelect = (doctor) => {
+    setSelectedDoctor(doctor);
+    setIsDropdownOpen(false);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <span className="text-2xl font-bold text-sky-600">
-                  Neighbourly
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <button
-                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              >
-                {isSidebarOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <div className="flex-1 flex overflow-hidden">
-        <div
-          className={`bg-white w-64 flex-shrink-0 border-r border-gray-200 ${
-            isSidebarOpen ? "block" : "hidden"
-          } md:block`}
-        >
+        {/* Desktop sidebar */}
+        <div className="bg-white w-64 flex-shrink-0 border-r border-gray-200 hidden md:block">
           <div className="h-full flex flex-col">
             <div className="p-4">
               <h2 className="text-lg font-semibold text-gray-900">
@@ -107,12 +82,9 @@ export default function ChatInterface() {
                 <button
                   key={doctor.id}
                   className={`w-full text-left px-4 py-2 flex items-center space-x-3 hover:bg-gray-100 ${
-                    selectedDoctor === doctor.id ? "bg-gray-100" : ""
+                    selectedDoctor?.id === doctor.id ? "bg-gray-100" : ""
                   }`}
-                  onClick={() => {
-                    setSelectedDoctor(doctor.id);
-                    setIsSidebarOpen(false);
-                  }}
+                  onClick={() => handleDoctorSelect(doctor)}
                 >
                   <img
                     className="h-10 w-10 rounded-full"
@@ -134,21 +106,59 @@ export default function ChatInterface() {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile doctor selector */}
+          <div className="md:hidden bg-white border-b border-gray-200 p-4">
+            <div className="relative">
+              <button
+                className="w-full text-left px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                {selectedDoctor ? selectedDoctor.name : "Select a doctor"}
+                <ChevronDown className="absolute right-4 top-3 h-5 w-5 text-gray-400" />
+              </button>
+              {isDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md">
+                  {doctors.map((doctor) => (
+                    <button
+                      key={doctor.id}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center space-x-3"
+                      onClick={() => handleDoctorSelect(doctor)}
+                    >
+                      <img
+                        className="h-10 w-10 rounded-full"
+                        src={doctor.avatar}
+                        alt=""
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {doctor.name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {doctor.specialty}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {selectedDoctor ? (
             <>
               <div className="bg-white border-b border-gray-200 flex items-center justify-between p-4">
                 <div className="flex items-center">
                   <img
                     className="h-10 w-10 rounded-full"
-                    src={doctors.find((d) => d.id === selectedDoctor).avatar}
+                    src={selectedDoctor.avatar}
                     alt=""
                   />
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-900">
-                      {doctors.find((d) => d.id === selectedDoctor).name}
+                      {selectedDoctor.name}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {doctors.find((d) => d.id === selectedDoctor).specialty}
+                      {selectedDoctor.specialty}
                     </p>
                   </div>
                 </div>
