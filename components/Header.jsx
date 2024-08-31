@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import useSupabaseUser from "@/utils/hooks/useSupabaseUser";
 
-export default function Header() {
+export default function Header({ user }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopDropdownOpen, setIsDesktopDropdownOpen] = useState(false);
+  const { user: userData } = useSupabaseUser();
+  const supabase = createClient();
+  const route = useRouter();
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard" },
@@ -14,28 +21,31 @@ export default function Header() {
     { name: "Messages", href: "/messages" },
   ];
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    route.replace("/auth");
+  };
+
   return (
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-sky-600">
-                Neighbourly
-              </span>
+              <span className="text-2xl font-bold text-sky-600">Care9ja</span>
             </div>
           </div>
 
           {/* Desktop menu */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
             <div className="ml-3 relative">
               <div>
@@ -52,7 +62,7 @@ export default function Header() {
                   <span className="sr-only">Open user menu</span>
                   <img
                     className="h-8 w-8 rounded-full"
-                    src="/api/placeholder/32/32"
+                    src={user.profile_picture_url}
                     alt="User avatar"
                   />
                 </button>
@@ -64,27 +74,28 @@ export default function Header() {
                   aria-orientation="vertical"
                   aria-labelledby="user-menu"
                 >
-                  <a
+                  <Link
                     href="#"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
                   >
                     Your Profile
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="#"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
                   >
                     Settings
-                  </a>
-                  <a
+                  </Link>
+                  <span
                     href="#"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
+                    onClick={handleSignOut}
                   >
                     Sign out
-                  </a>
+                  </span>
                 </div>
               )}
             </div>
@@ -115,13 +126,13 @@ export default function Header() {
         <div className="sm:hidden" id="mobile-menu">
           <div className="pt-2 pb-3 space-y-1">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
@@ -129,38 +140,39 @@ export default function Header() {
               <div className="flex-shrink-0">
                 <img
                   className="h-10 w-10 rounded-full"
-                  src="/api/placeholder/40/40"
+                  src={user.profile_picture_url}
                   alt="User avatar"
                 />
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium text-gray-800">
-                  Dr. John Doe
+                  {user?.user_type === "doctor" ? "Dr. " + user.full_name : ""}
                 </div>
                 <div className="text-sm font-medium text-gray-500">
-                  johndoe@example.com
+                 {userData?.email}
                 </div>
               </div>
             </div>
             <div className="mt-3 space-y-1">
-              <a
+              <Link
                 href="#"
                 className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
               >
                 Your Profile
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
               >
                 Settings
-              </a>
-              <a
+              </Link>
+              <span
                 href="#"
+                onClick={handleSignOut}
                 className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
               >
                 Sign out
-              </a>
+              </span>
             </div>
           </div>
         </div>

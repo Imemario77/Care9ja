@@ -1,10 +1,155 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Camera } from "lucide-react";
+import Image from "next/image";
+import { v4 as uuidv4 } from "uuid";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
-export default function DoctorOnboarding() {
+export default function DoctorOnboarding({ user }) {
   const [step, setStep] = useState(1);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const imgRef = useRef(null);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    specialization: "",
+    licenseNumber: "",
+    yearsOfExperience: "",
+    bio: "",
+    profilePicture: null,
+  });
+  const [errors, setErrors] = useState({});
+  const supabase = createClient();
+  const route = useRouter();
+
+  useEffect(() => {
+    if (formData.profilePicture) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(formData.profilePicture);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [formData.profilePicture]);
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    if (name === "profilePicture") {
+      setFormData((prevData) => ({
+        ...prevData,
+        profilePicture: files[0],
+      }));
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
+  };
+  const validateStep = (currentStep) => {
+    let stepErrors = {};
+    switch (currentStep) {
+      case 1:
+        if (!formData.fullName.trim())
+          stepErrors.fullName = "Full Name is required";
+        if (!formData.specialization.trim())
+          stepErrors.specialization = "Specialization is required";
+        break;
+      case 2:
+        if (!formData.licenseNumber.trim())
+          stepErrors.licenseNumber = "License Number is required";
+        if (!formData.yearsOfExperience)
+          stepErrors.yearsOfExperience = "Years of Experience is required";
+        break;
+      case 3:
+        if (!formData.bio.trim())
+          stepErrors.bio = "Professional Bio is required";
+        break;
+    }
+    setErrors(stepErrors);
+    return Object.keys(stepErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validateStep(step)) {
+      setStep(step + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    setStep(step - 1);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (validateStep(step)) {
+      setLoading(true);
+      try {
+        // Upload profile picture if exists
+        let profilePictureUrl = "";
+        let fileName = `profile/${uuidv4()}_${formData.profilePicture.name}`;
+        if (formData.profilePicture) {
+          const { data, error: uploadError } = await supabase.storage
+            .from("IMG")
+            .upload(fileName, formData.profilePicture);
+
+          if (uploadError) {
+            throw new Error(uploadError.message);
+          }
+          // Get the public URL of the uploaded file
+          const {
+            data: { publicUrl },
+            error: urlError,
+          } = supabase.storage.from("IMG").getPublicUrl(fileName);
+          profilePictureUrl = publicUrl;
+        }
+
+        // Insert data into Users table
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .insert({
+            id: user.id,
+            full_name: formData.fullName,
+            user_type: "doctor",
+            profile_picture_url: profilePictureUrl,
+          })
+          .select("id");
+
+        if (userError) {
+          throw new Error(userError.message);
+        }
+
+        // Insert data into DoctorProfiles table
+        const { error: profileError } = await supabase
+          .from("doctorprofiles")
+          .insert({
+            id: userData[0].id,
+            specialization: formData.specialization,
+            license_number: formData.licenseNumber,
+            years_of_experience: formData.yearsOfExperience,
+            bio: formData.bio,
+          });
+
+        if (profileError) {
+          throw new Error(profileError.message);
+        }
+
+        toast.success("Onboarding completed successfully!");
+
+        route.push("/dashboard");
+      } catch (error) {
+        console.error("Unexpected error during submission:", error);
+        toast.error("An error occurred. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -22,8 +167,15 @@ export default function DoctorOnboarding() {
                 type="text"
                 id="fullName"
                 name="fullName"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                value={formData.fullName}
+                onChange={handleChange}
+                className={`mt-1 block w-full border ${
+                  errors.fullName ? "border-red-500" : "border-gray-300"
+                } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm`}
               />
+              {errors.fullName && (
+                <p className="mt-2 text-sm text-red-600">{errors.fullName}</p>
+              )}
             </div>
             <div>
               <label
@@ -36,8 +188,17 @@ export default function DoctorOnboarding() {
                 type="text"
                 id="specialization"
                 name="specialization"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                value={formData.specialization}
+                onChange={handleChange}
+                className={`mt-1 block w-full border ${
+                  errors.specialization ? "border-red-500" : "border-gray-300"
+                } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm`}
               />
+              {errors.specialization && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.specialization}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -55,8 +216,17 @@ export default function DoctorOnboarding() {
                 type="text"
                 id="licenseNumber"
                 name="licenseNumber"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                value={formData.licenseNumber}
+                onChange={handleChange}
+                className={`mt-1 block w-full border ${
+                  errors.licenseNumber ? "border-red-500" : "border-gray-300"
+                } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm`}
               />
+              {errors.licenseNumber && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.licenseNumber}
+                </p>
+              )}
             </div>
             <div>
               <label
@@ -69,8 +239,19 @@ export default function DoctorOnboarding() {
                 type="number"
                 id="yearsOfExperience"
                 name="yearsOfExperience"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                value={formData.yearsOfExperience}
+                onChange={handleChange}
+                className={`mt-1 block w-full border ${
+                  errors.yearsOfExperience
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm`}
               />
+              {errors.yearsOfExperience && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.yearsOfExperience}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -88,8 +269,15 @@ export default function DoctorOnboarding() {
                 id="bio"
                 name="bio"
                 rows={4}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                value={formData.bio}
+                onChange={handleChange}
+                className={`mt-1 block w-full border ${
+                  errors.bio ? "border-red-500" : "border-gray-300"
+                } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm`}
               ></textarea>
+              {errors.bio && (
+                <p className="mt-2 text-sm text-red-600">{errors.bio}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -97,10 +285,29 @@ export default function DoctorOnboarding() {
               </label>
               <div className="mt-1 flex items-center">
                 <span className="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100">
-                  <Camera className="h-full w-full text-gray-300" />
+                  {previewUrl ? (
+                    <Image
+                      src={previewUrl}
+                      alt="Profile preview"
+                      className="h-full w-full object-cover"
+                      width={100}
+                      height={100}
+                    />
+                  ) : (
+                    <Camera className="h-full w-full text-gray-300" />
+                  )}
                 </span>
+                <input
+                  type="file"
+                  className="hidden"
+                  name="profilePicture"
+                  ref={imgRef}
+                  onChange={handleChange}
+                  accept="image/*"
+                />
                 <button
                   type="button"
+                  onClick={() => imgRef.current.click()}
                   className="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
                 >
                   Change
@@ -133,7 +340,7 @@ export default function DoctorOnboarding() {
               {step > 1 && (
                 <button
                   type="button"
-                  onClick={() => setStep(step - 1)}
+                  onClick={handlePrevious}
                   className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 >
                   Previous
@@ -142,17 +349,45 @@ export default function DoctorOnboarding() {
               {step < 3 ? (
                 <button
                   type="button"
-                  onClick={() => setStep(step + 1)}
+                  onClick={handleNext}
                   className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
                 >
                   Next
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  disabled={loading}
+                  onClick={handleSubmit}
                   className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
                 >
-                  Complete
+                  {loading ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    "Complete"
+                  )}
                 </button>
               )}
             </div>
