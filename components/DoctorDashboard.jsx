@@ -2,7 +2,7 @@ import React from "react";
 import { Calendar, Users, MessageCircle, FileText } from "lucide-react";
 import Link from "next/link";
 
-export default function DoctorDashboard() {
+export default function DoctorDashboard({ profile, user }) {
   const appointments = [
     { id: 1, patientName: "John Doe", time: "10:00 AM", type: "Video Call" },
     { id: 2, patientName: "Jane Smith", time: "11:30 AM", type: "In-person" },

@@ -8,7 +8,7 @@ import {
   User,
 } from "lucide-react";
 
-export default function ClientDashboard() {
+export default function ClientDashboard({profile, user}) {
   const upcomingAppointments = [
     {
       id: 1,
@@ -37,7 +37,7 @@ export default function ClientDashboard() {
         <header>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold leading-tight text-gray-900">
-              Welcome, John
+              Welcome, {profile.full_name}
             </h1>
           </div>
         </header>

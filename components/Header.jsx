@@ -17,6 +17,7 @@ export default function Header({ user }) {
   const navItems = [
     { name: "Dashboard", href: "/dashboard" },
     { name: "Patients", href: "/patients" },
+    { name: "Doctors", href: "/doctors" },
     { name: "Appointments", href: "/appointments" },
     { name: "Messages", href: "/messages" },
   ];
@@ -38,15 +39,27 @@ export default function Header({ user }) {
 
           {/* Desktop menu */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navItems.map((item) =>
+              user.user_type === "patient" && item.name !== "Patients" ? (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  {item.name}
+                </Link>
+              ) : (
+                user.user_type === "doctor" && (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    {item.name}
+                  </Link>
+                )
+              )
+            )}
             <div className="ml-3 relative">
               <div>
                 <button
@@ -125,15 +138,27 @@ export default function Header({ user }) {
       {isMobileMenuOpen && (
         <div className="sm:hidden" id="mobile-menu">
           <div className="pt-2 pb-3 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navItems.map((item) =>
+              user.user_type === "patient" && item.name !== "Patients" ? (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  {item.name}
+                </Link>
+              ) : (
+                user.user_type === "doctor" && (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    {item.name}
+                  </Link>
+                )
+              )
+            )}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-4">
@@ -146,10 +171,12 @@ export default function Header({ user }) {
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium text-gray-800">
-                  {user?.user_type === "doctor" ? "Dr. " + user.full_name : ""}
+                  {user?.user_type === "doctor"
+                    ? "Dr. " + user.full_name
+                    : user.full_name}
                 </div>
                 <div className="text-sm font-medium text-gray-500">
-                 {userData?.email}
+                  {userData?.email}
                 </div>
               </div>
             </div>

@@ -44,10 +44,8 @@ export default async function RootLayout({ children }) {
     }
   }
 
-  // Usage
   const { exists: isOnboarded, userData } = await checkUserAndGetData(user.id);
 
-  console.log(isOnboarded, userData);
 
   if (!isOnboarded) {
     redirect("/onboarding");
