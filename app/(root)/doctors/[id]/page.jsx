@@ -1,22 +1,15 @@
 import React from "react";
-import { User, Phone, MapPin, Calendar, Award } from "lucide-react";
+import { Phone, MapPin, Calendar, Award } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
+import DoctorProfileActionButton from "@/components/DoctorProfileActionButton";
 
-// Mock data for demonstration
-const mockDoctor = {
-  id: "1",
-  full_name: "Dr. John Doe",
-  specialization: "Cardiology",
-  license_number: "MD12345",
-  years_of_experience: 10,
-  bio: "Dr. John Doe is a board-certified cardiologist with over 10 years of experience in treating various heart conditions.",
-  phone_number: "+1 (555) 123-4567",
-  address: "123 Medical Center Dr, Healthville, NY 10001",
-  profile_picture_url: "/api/placeholder/150/150",
-};
-
-export default async function DoctorProfilePage({ params }) {
+export default async function DoctorProfilePage({ params: { id } }) {
   const supabase = createClient();
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   const { data, error: err } = await supabase
     .from("doctorprofiles")
@@ -28,10 +21,8 @@ export default async function DoctorProfilePage({ params }) {
       )
     `
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
-
-  console.log(data);
 
   const doctor = data;
 
@@ -78,14 +69,7 @@ export default async function DoctorProfilePage({ params }) {
             </div>
           </div>
         </div>
-        <div className="px-8 py-4 flex  gap-4">
-          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors">
-            Book Appointment
-          </button>
-          <button className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors">
-            Chat With Doctor
-          </button>
-        </div>
+        <DoctorProfileActionButton patientId={user.id} doctorId={id} />
       </div>
     </div>
   );
