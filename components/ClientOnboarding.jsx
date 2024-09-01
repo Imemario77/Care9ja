@@ -142,7 +142,7 @@ export default function ClientOnboarding({ user }) {
         const { error: patientError } = await supabase
           .from("patientprofiles")
           .insert({
-            id: userData[0].id,
+            user_id: userData[0].id,
             height: formData.height,
             weight: formData.weight,
             blood_type: formData.bloodType,

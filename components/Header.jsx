@@ -24,7 +24,7 @@ export default function Header({ user }) {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    route.replace("/auth");
+    route.push("/auth");
   };
 
   return (
@@ -49,7 +49,8 @@ export default function Header({ user }) {
                   {item.name}
                 </Link>
               ) : (
-                user.user_type === "doctor" && (
+                user.user_type === "doctor" &&
+                item.name !== "Doctors" && (
                   <Link
                     key={item.name}
                     href={item.href}
@@ -139,7 +140,7 @@ export default function Header({ user }) {
         <div className="sm:hidden" id="mobile-menu">
           <div className="pt-2 pb-3 space-y-1">
             {navItems.map((item) =>
-              user.user_type === "patient" && item.name !== "Patients" ? (
+              user.user_type === "patient" && item.name !== "Doctors" ? (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -148,7 +149,8 @@ export default function Header({ user }) {
                   {item.name}
                 </Link>
               ) : (
-                user.user_type === "doctor" && (
+                user.user_type === "doctor" &&
+                item.name !== "Patients" && (
                   <Link
                     key={item.name}
                     href={item.href}

@@ -144,7 +144,7 @@ export default function DoctorOnboarding({ user }) {
         const { error: profileError } = await supabase
           .from("doctorprofiles")
           .insert({
-            id: userData[0].id,
+            user_id: userData[0].id,
             specialization: formData.specialization,
             license_number: formData.licenseNumber,
             years_of_experience: formData.yearsOfExperience,

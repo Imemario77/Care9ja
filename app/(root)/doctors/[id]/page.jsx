@@ -16,7 +16,7 @@ export default async function DoctorProfilePage({ params: { id } }) {
     .select(
       `
       *,
-    user:id (
+    user:user_id (
         *
       )
     `
