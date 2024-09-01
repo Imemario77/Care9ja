@@ -63,9 +63,11 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   }, [selectedAccount]);
 
   const isAccountOnline = (account) => {
-    return Object.values(onlineUsers).some((presence) =>
-      presence.some((p) => p.user_id === account.user.id)
-    );
+    return Object.values(onlineUsers).some((presence) => {
+      return presence.some(
+        (p) => p.user_id === account.user.user?.id || account.user?.id
+      );
+    });
   };
 
   const fetchMessages = async () => {

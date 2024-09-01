@@ -36,10 +36,13 @@ async function Chat({ searchParams: { id } }) {
         specialization,
         user:user_id (
         full_name,
-        profile_picture_url`
+        profile_picture_url,
+        id
+        `
           : `user:patient_id (
           full_name,
-          profile_picture_url
+          profile_picture_url,
+          id
           )`
       }
         )
@@ -61,10 +64,13 @@ async function Chat({ searchParams: { id } }) {
         specialization,
         user:user_id (
         full_name,
-        profile_picture_url`
+        profile_picture_url,
+        id
+        `
           : `user:patient_id (
           full_name,
-          profile_picture_url
+          profile_picture_url,
+          id
           )`
       }
         )
