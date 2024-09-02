@@ -140,7 +140,7 @@ export default function Header({ user }) {
         <div className="sm:hidden" id="mobile-menu">
           <div className="pt-2 pb-3 space-y-1">
             {navItems.map((item) =>
-              user.user_type === "patient" && item.name !== "Doctors" ? (
+              user.user_type === "patient" && item.name !== "Patients" ? (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -150,7 +150,7 @@ export default function Header({ user }) {
                 </Link>
               ) : (
                 user.user_type === "doctor" &&
-                item.name !== "Patients" && (
+                item.name !== "Doctors" && (
                   <Link
                     key={item.name}
                     href={item.href}

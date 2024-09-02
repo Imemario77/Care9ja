@@ -35,6 +35,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
         });
 
       return () => {
+        channel.untrack({ user_id: userId });
         channel.unsubscribe();
       };
     }
@@ -63,11 +64,12 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   }, [selectedAccount]);
 
   const isAccountOnline = (account) => {
-    return Object.values(onlineUsers).some((presence) => {
-      return presence.some(
-        (p) => p.user_id === account.user.user?.id || account.user?.id
-      );
-    });
+    console.log(account.user);
+    const userPresence = Object.values(onlineUsers).find((presence) =>
+      presence.some((p) => p.user_id === account)
+    );
+    console.log(userPresence);
+    return Boolean(userPresence);
   };
 
   const fetchMessages = async () => {
@@ -133,7 +135,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                   account={account}
                   isSelected={selectedAccount?.id === account.id}
                   onClick={() => handleAccountSelect(account)}
-                  isOnline={isAccountOnline(account)}
+                  isAccountOnline={isAccountOnline}
                 />
               ))}
             </nav>
@@ -204,9 +206,17 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                     />
                     <span
                       className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white ${
-                        isAccountOnline(selectedAccount)
+                        isAccountOnline(
+                          selectedAccount.user?.id ||
+                            selectedAccount.user?.user?.id
+                        )
                           ? "bg-green-400"
-                          : "bg-gray-300"
+                          : isAccountOnline(
+                              selectedAccount.user?.id ||
+                                selectedAccount.user?.user?.id
+                            ) === false
+                          ? "bg-gray-300"
+                          : "bg-yellow-400"
                       }`}
                     />
                   </div>
@@ -296,7 +306,7 @@ const MessageList = ({ messages, userId }) => (
   </div>
 );
 
-const AccountButton = ({ account, isSelected, onClick, isOnline }) => (
+const AccountButton = ({ account, isSelected, onClick, isAccountOnline }) => (
   <button
     className={`w-full text-left px-4 py-2 flex items-center space-x-3 hover:bg-gray-100 ${
       isSelected ? "bg-gray-100" : ""
@@ -320,7 +330,12 @@ const AccountButton = ({ account, isSelected, onClick, isOnline }) => (
       />
       <span
         className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white ${
-          isOnline ? "bg-green-400" : "bg-gray-300"
+          isAccountOnline(account.user?.id || account.user?.user?.id)
+            ? "bg-green-400"
+            : isAccountOnline(account.user?.id || account.user?.user?.id) ===
+              false
+            ? "bg-gray-300"
+            : "bg-yellow-400"
         }`}
       />
     </div>

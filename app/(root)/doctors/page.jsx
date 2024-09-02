@@ -5,7 +5,7 @@ export default async function DoctorsListPage() {
   const supabse = createClient();
   const { data, error } = await supabse.from("doctorprofiles").select(`
       years_of_experience, id, specialization,
-    user:user_id (
+      user:user_id (
         full_name, profile_picture_url
       )
     `);

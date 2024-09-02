@@ -32,7 +32,6 @@ async function Chat({ searchParams: { id } }) {
       ${
         !dc_id
           ? ` user:doctor_id (
-        id,
         specialization,
         user:user_id (
         full_name,
@@ -60,7 +59,6 @@ async function Chat({ searchParams: { id } }) {
       ${
         !dc_id
           ? ` user:doctor_id (
-        id,
         specialization,
         user:user_id (
         full_name,

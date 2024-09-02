@@ -140,7 +140,7 @@ export default function AuthPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  {isLogin ? "New to Neighbourly?" : "Already have an account?"}
+                  {isLogin ? "New to Care9ja?" : "Already have an account?"}
                 </span>
               </div>
             </div>
