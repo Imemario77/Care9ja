@@ -16,14 +16,102 @@ export default function AppointmentBooking({ user, doctors }) {
 
   const supabase = createClient();
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   // Convert selected date and time to ISO strings
+  //   const startTime = new Date(`${selectedDate}T${selectedTime}`).toISOString();
+  //   const endTime = new Date(
+  //     new Date(startTime).getTime() + 60 * 60 * 1000
+  //   ).toISOString(); // Assuming 1-hour appointment
+
+  //   console.log(doctorId);
+
+  //   // Check if the doctor exists
+  //   const { data: doctors, error: doctorError } = await supabase
+  //     .from("doctorprofiles")
+  //     .select("id")
+  //     .eq("id", doctorId)
+  //     .single();
+
+  //   if (doctorError || !doctors) {
+  //     toast.error("Doctor not found");
+  //     return;
+  //   }
+
+  //   // Check for existing appointments with a buffer
+  //   const rangeStart = new Date(startTime).getTime();
+  //   const rangeEnd = new Date(endTime).getTime() + 36000;
+
+  //   const { data: existingAppointments, error: appointmentError } =
+  //     await supabase
+  //       .from("appointments")
+  //       .select("id, start_time, end_time")
+  //       .eq("doctor_id", doctorId)
+  //       .lt("start_time", rangeStart)
+  //       .gt("end_time", rangeEnd);
+
+  //   console.log(existingAppointments);
+  //   if (appointmentError) {
+  //     toast.error("Error checking doctor's availability");
+  //     console.log(appointmentError);
+  //     return;
+  //   }
+
+  //   if (existingAppointments && existingAppointments.length > 0) {
+  //     toast.error("Doctor is not available at the selected time");
+  //     return;
+  //   }
+
+  //   // Create appointment
+  //   const { data: appointment, error: bookingError } = await supabase
+  //     .from("appointments")
+  //     .insert([
+  //       {
+  //         doctor_id: doctorId,
+  //         patient_id: user.id, // Replace with actual patient ID
+  //         start_time: startTime,
+  //         end_time: endTime,
+  //         appointment_type: appointmentType,
+  //         status: "scheduled",
+  //         notes, // Add any additional notes if needed
+  //       },
+  //     ]);
+
+  //   if (bookingError) {
+  //     console.log(bookingError);
+  //     toast.error("Error booking the appointment");
+  //     return;
+  //   }
+
+  //   toast.success("Appointment booked successfully");
+  //   setError("");
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const startTime = new Date(`${selectedDate}T${selectedTime}`);
-    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // Assuming 1-hour appointment
+    // Convert selected date and time to a JavaScript Date object
+    const startDate = new Date(`${selectedDate}T${selectedTime}`);
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Assuming 1-hour appointment
 
-    console.log(doctorId);
-    // Check if the doctor exists and is free
+    // Format to YYYY-MM-DD HH:MM:SS
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const startTime = formatDate(startDate);
+    const endTime = formatDate(endDate);
+
+    console.log("Doctor ID:", doctorId);
+
+    // Check if the doctor exists
     const { data: doctors, error: doctorError } = await supabase
       .from("doctorprofiles")
       .select("id")
@@ -37,22 +125,28 @@ export default function AppointmentBooking({ user, doctors }) {
 
     // Check for existing appointments with a buffer
     const bufferMinutes = 5;
-    const rangeStart = new Date(startTime.getTime() - bufferMinutes * 60000);
-    const rangeEnd = new Date(endTime.getTime() + bufferMinutes * 60000);
+    const bufferMilliseconds = bufferMinutes * 60 * 1000;
+    const rangeStart = new Date(startDate.getTime() - bufferMilliseconds);
+    const rangeEnd = new Date(endDate.getTime() + bufferMilliseconds);
+
+    const rangeStartStr = formatDate(rangeStart);
+    const rangeEndStr = formatDate(rangeEnd);
+
+    console.log("Range Start:", rangeStartStr);
+    console.log("Range End:", rangeEndStr);
 
     const { data: existingAppointments, error: appointmentError } =
       await supabase
         .from("appointments")
         .select("id, start_time, end_time")
         .eq("doctor_id", doctorId)
-        .or(
-          `start_time.lte.${rangeEnd.toLocaleString()},end_time.gte.${rangeStart.toLocaleString()}`
-        );
+        .lte("start_time", rangeEndStr)
+        .gte("end_time", rangeStartStr);
 
-    console.log(existingAppointments);
+    console.log("Existing Appointments:", existingAppointments);
     if (appointmentError) {
       toast.error("Error checking doctor's availability");
-      console.log(appointmentError);
+      console.error("Appointment Error:", appointmentError);
       return;
     }
 
@@ -68,8 +162,8 @@ export default function AppointmentBooking({ user, doctors }) {
         {
           doctor_id: doctorId,
           patient_id: user.id, // Replace with actual patient ID
-          start_time: startTime.toLocaleString(),
-          end_time: endTime.toLocaleString(),
+          start_time: startTime,
+          end_time: endTime,
           appointment_type: appointmentType,
           status: "scheduled",
           notes, // Add any additional notes if needed
@@ -77,7 +171,7 @@ export default function AppointmentBooking({ user, doctors }) {
       ]);
 
     if (bookingError) {
-      console.log(bookingError);
+      console.error("Booking Error:", bookingError);
       toast.error("Error booking the appointment");
       return;
     }
@@ -118,7 +212,7 @@ export default function AppointmentBooking({ user, doctors }) {
                         <input
                           type="date"
                           id="date"
-                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 py-3 outline-none sm:text-sm border-gray-300 rounded-md"
                           value={selectedDate}
                           onChange={(e) => setSelectedDate(e.target.value)}
                           required
@@ -140,7 +234,7 @@ export default function AppointmentBooking({ user, doctors }) {
                         <input
                           type="time"
                           id="time"
-                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10  py-3 outline-none  sm:text-sm border-gray-300 rounded-md"
                           value={selectedTime}
                           onChange={(e) => setSelectedTime(e.target.value)}
                           required
@@ -161,7 +255,7 @@ export default function AppointmentBooking({ user, doctors }) {
                         </div>
                         <select
                           id="appointmentType"
-                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 py-3 outline-none  sm:text-sm border-gray-300 rounded-md"
                           value={appointmentType}
                           onChange={(e) => setAppointmentType(e.target.value)}
                           required
@@ -186,7 +280,7 @@ export default function AppointmentBooking({ user, doctors }) {
                         </div>
                         <select
                           id="doctorId"
-                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10  py-3 outline-none sm:text-sm border-gray-300 rounded-md"
                           value={doctorId}
                           onChange={(e) => setDoctorId(e.target.value)}
                           required
@@ -215,7 +309,7 @@ export default function AppointmentBooking({ user, doctors }) {
                         <input
                           type="text"
                           id="notes"
-                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 py-3 outline-none  sm:text-sm border-gray-300 rounded-md"
                           placeholder="Notes....."
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
@@ -241,5 +335,3 @@ export default function AppointmentBooking({ user, doctors }) {
     </div>
   );
 }
-
-

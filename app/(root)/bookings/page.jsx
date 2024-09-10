@@ -23,7 +23,6 @@ async function Booking() {
       `
     )
     .eq("patient_id", user.id);
-  console.log(data);
 
   return (
     <div>
