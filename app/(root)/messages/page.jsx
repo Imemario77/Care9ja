@@ -24,7 +24,7 @@ async function Chat({ searchParams: { id } }) {
     dc_id = doctor_account.id;
   }
 
-  const { data, error } = await supabase
+  const { data: chat_data, error } = await supabase
     .from("chats")
     .select(
       `
@@ -75,14 +75,14 @@ async function Chat({ searchParams: { id } }) {
       )
     `
       )
-      .eq("id", id);
+      .eq("id", id).single();
     activeAccount = data;
   }
 
   return (
     <div className="h-screen  absolute top-0 w-full">
       <ChatInterface
-        accounts={data || []}
+        accounts={chat_data || []}
         activeAccount={activeAccount}
         userId={user.id}
       />

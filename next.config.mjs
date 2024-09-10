@@ -9,6 +9,14 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        "localhost:3000", // localhost
+        "rb0mjwb9-3000.uks1.devtunnels.ms", // Codespaces
+      ],
+    },
+  },
 };
 
 export default nextConfig;

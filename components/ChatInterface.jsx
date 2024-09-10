@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Send,
-  Phone,
-  Video,
   ChevronDown,
   ArrowLeft,
   ImageIcon,
@@ -74,7 +72,6 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   }, [selectedAccount]);
 
   const isAccountOnline = (account) => {
-    console.log(account.user);
     const userPresence = Object.values(onlineUsers).find((presence) =>
       presence.some((p) => p.user_id === account)
     );
@@ -217,7 +214,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                 <ChevronDown className="absolute right-4 top-3 h-5 w-5 text-gray-400" />
               </button>
               {isDropdownOpen && (
-                <div className="absolute z-10 mt-[60px] w-full bg-white shadow-lg rounded-md">
+                <div className="absolute z-10 mt-[100px] w-full bg-white shadow-lg rounded-md">
                   {accounts.map((account) => (
                     <button
                       key={account.id}
