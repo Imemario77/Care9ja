@@ -7,8 +7,9 @@ import {
   Activity,
   User,
 } from "lucide-react";
+import Link from "next/link";
 
-export default function ClientDashboard({profile, user}) {
+export default function ClientDashboard({ profile, user }) {
   const upcomingAppointments = [
     {
       id: 1,
@@ -218,10 +219,13 @@ export default function ClientDashboard({profile, user}) {
                     </h3>
                   </div>
                   <div className="px-4 py-5 sm:p-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    <Link
+                      href="bookings"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+                    >
                       <User className="mr-2 h-5 w-5" />
                       Book Appointment
-                    </button>
+                    </Link>
                     <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                       <MessageCircle className="mr-2 h-5 w-5" />
                       Start Chat Consultation

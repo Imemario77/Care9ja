@@ -2,23 +2,88 @@
 
 import React, { useState } from "react";
 import { Calendar, Clock, VideoIcon, User } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "react-toastify";
 
-export default function AppointmentBooking() {
+export default function AppointmentBooking({ user, doctors }) {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [appointmentType, setAppointmentType] = useState("");
-  const [doctorName, setDoctorName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [doctorId, setDoctorId] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (e) => {
+  const supabase = createClient();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the booking data to your backend
-    console.log("Booking submitted:", {
-      selectedDate,
-      selectedTime,
-      appointmentType,
-      doctorName,
-    });
-    // Reset form or show confirmation message
+
+    const startTime = new Date(`${selectedDate}T${selectedTime}`);
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // Assuming 1-hour appointment
+
+    console.log(doctorId);
+    // Check if the doctor exists and is free
+    const { data: doctors, error: doctorError } = await supabase
+      .from("doctorprofiles")
+      .select("id")
+      .eq("id", doctorId)
+      .single();
+
+    if (doctorError || !doctors) {
+      toast.error("Doctor not found");
+      return;
+    }
+
+    // Check for existing appointments with a buffer
+    const bufferMinutes = 5;
+    const rangeStart = new Date(startTime.getTime() - bufferMinutes * 60000);
+    const rangeEnd = new Date(endTime.getTime() + bufferMinutes * 60000);
+
+    const { data: existingAppointments, error: appointmentError } =
+      await supabase
+        .from("appointments")
+        .select("id, start_time, end_time")
+        .eq("doctor_id", doctorId)
+        .or(
+          `start_time.lte.${rangeEnd.toLocaleString()},end_time.gte.${rangeStart.toLocaleString()}`
+        );
+
+    console.log(existingAppointments);
+    if (appointmentError) {
+      toast.error("Error checking doctor's availability");
+      console.log(appointmentError);
+      return;
+    }
+
+    if (existingAppointments && existingAppointments.length > 0) {
+      toast.error("Doctor is not available at the selected time");
+      return;
+    }
+
+    // Create appointment
+    const { data: appointment, error: bookingError } = await supabase
+      .from("appointments")
+      .insert([
+        {
+          doctor_id: doctorId,
+          patient_id: user.id, // Replace with actual patient ID
+          start_time: startTime.toLocaleString(),
+          end_time: endTime.toLocaleString(),
+          appointment_type: appointmentType,
+          status: "scheduled",
+          notes, // Add any additional notes if needed
+        },
+      ]);
+
+    if (bookingError) {
+      console.log(bookingError);
+      toast.error("Error booking the appointment");
+      return;
+    }
+
+    toast.success("Appointment booked successfully");
+    setError("");
   };
 
   return (
@@ -37,6 +102,8 @@ export default function AppointmentBooking() {
               <div className="bg-white shadow overflow-hidden sm:rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    {error && <div className="text-red-500">{error}</div>}
+                    {success && <div className="text-green-500">{success}</div>}
                     <div>
                       <label
                         htmlFor="date"
@@ -108,7 +175,7 @@ export default function AppointmentBooking() {
 
                     <div>
                       <label
-                        htmlFor="doctorName"
+                        htmlFor="doctorId"
                         className="block text-sm font-medium text-gray-700"
                       >
                         Doctor
@@ -117,14 +184,41 @@ export default function AppointmentBooking() {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <User className="h-5 w-5 text-gray-400" />
                         </div>
+                        <select
+                          id="doctorId"
+                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                          value={doctorId}
+                          onChange={(e) => setDoctorId(e.target.value)}
+                          required
+                        >
+                          <option value="">Select Doctor</option>
+                          {doctors.map((doc) => (
+                            <option key={doc.doctor_id} value={doc.doctor_id}>
+                              {doc?.doctor?.user?.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="notes"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Notes
+                      </label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
                         <input
                           type="text"
-                          id="doctorName"
+                          id="notes"
                           className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-                          placeholder="Enter doctor's name"
-                          value={doctorName}
-                          onChange={(e) => setDoctorName(e.target.value)}
-                          required
+                          placeholder="Notes....."
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
                         />
                       </div>
                     </div>
@@ -147,3 +241,5 @@ export default function AppointmentBooking() {
     </div>
   );
 }
+
+

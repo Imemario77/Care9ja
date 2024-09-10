@@ -1,7 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Send, Phone, Video, ChevronDown, ArrowLeft } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Send,
+  Phone,
+  Video,
+  ChevronDown,
+  ArrowLeft,
+  ImageIcon,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -11,7 +19,9 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   const [message, setMessage] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState({});
-
+  const [selectedImage, setSelectedImage] = useState(null);
+  const fileInputRef = useRef(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [messages, setMessages] = useState([]);
 
   const router = useRouter();
@@ -88,21 +98,68 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
     }
   };
 
+  const handleImageSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+
+      // Create image preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadImage = async (file) => {
+    const supabase = createClient();
+    const fileExt = file.name.split(".").pop();
+    const fileName = `messages/${Math.random()}.${fileExt}`;
+    const { data, error } = await supabase.storage
+      .from("IMG")
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("IMG").getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (message.trim() && selectedAccount) {
+    if ((message.trim() || selectedImage) && selectedAccount) {
       try {
+        let imageUrl = null;
+        if (selectedImage) {
+          imageUrl = await uploadImage(selectedImage);
+        }
+
         const { data, error } = await supabase
           .from("messages")
           .insert({
             content: message,
             sender_id: userId,
             chat_id: selectedAccount.id,
+            image: imageUrl,
           })
           .single();
 
         if (error) throw error;
         setMessage("");
+        setSelectedImage(null);
+        setImagePreview(null)
       } catch (error) {
         console.error("Error sending message:", error);
       }
@@ -246,6 +303,21 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
               <MessageList messages={messages} userId={userId} />
 
               <div className="bg-white border-t border-gray-200 p-4">
+                {imagePreview && (
+                  <div className="mb-2 relative">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="max-h-32 rounded"
+                    />
+                    <button
+                      onClick={handleRemoveImage}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
                 <form onSubmit={handleSendMessage} className="flex space-x-2">
                   <input
                     type="text"
@@ -254,6 +326,20 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                     className="flex-1 focus:ring-sky-500 focus:border-sky-500 block w-full rounded-md sm:text-sm border-gray-300 focus:outline-none"
                     placeholder="Type a message..."
                   />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current.click()}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+                  >
+                    <ImageIcon className="h-5 w-5" />
+                  </button>
                   <button
                     type="submit"
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
@@ -292,7 +378,14 @@ const MessageList = ({ messages, userId }) => (
               : "bg-gray-200 text-gray-900"
           }`}
         >
-          <p>{msg.content}</p>
+          {msg.content && <p>{msg.content}</p>}
+          {msg.image && (
+            <img
+              src={msg.image}
+              alt="Shared image"
+              className="mt-2 max-w-full rounded"
+            />
+          )}
           <p
             className={`text-xs mt-1 ${
               msg.sender_id === userId ? "text-sky-100" : "text-gray-500"
