@@ -159,7 +159,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
         if (error) throw error;
         setMessage("");
         setSelectedImage(null);
-        setImagePreview(null)
+        setImagePreview(null);
       } catch (error) {
         console.error("Error sending message:", error);
       }
@@ -217,7 +217,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                 <ChevronDown className="absolute right-4 top-3 h-5 w-5 text-gray-400" />
               </button>
               {isDropdownOpen && (
-                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md">
+                <div className="absolute z-10 mt-[60px] w-full bg-white shadow-lg rounded-md">
                   {accounts.map((account) => (
                     <button
                       key={account.id}
@@ -286,17 +286,6 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                       {selectedAccount.user?.specialization}
                     </p>
                   </div>
-                </div>
-                <div className="flex space-x-2">
-                  <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
-                    <Phone className="h-5 w-5" />
-                  </button>
-                  <button
-                    className="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
-                    onClick={() => router.push("/call")}
-                  >
-                    <Video className="h-5 w-5" />
-                  </button>
                 </div>
               </div>
 
