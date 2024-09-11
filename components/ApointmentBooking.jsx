@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Calendar, Clock, VideoIcon, User } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "react-toastify";
+import { formatDate } from "@/utils/functions";
 
 export default function AppointmentBooking({ user, doctors }) {
   const [selectedDate, setSelectedDate] = useState("");
@@ -16,78 +17,6 @@ export default function AppointmentBooking({ user, doctors }) {
 
   const supabase = createClient();
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   // Convert selected date and time to ISO strings
-  //   const startTime = new Date(`${selectedDate}T${selectedTime}`).toISOString();
-  //   const endTime = new Date(
-  //     new Date(startTime).getTime() + 60 * 60 * 1000
-  //   ).toISOString(); // Assuming 1-hour appointment
-
-  //   console.log(doctorId);
-
-  //   // Check if the doctor exists
-  //   const { data: doctors, error: doctorError } = await supabase
-  //     .from("doctorprofiles")
-  //     .select("id")
-  //     .eq("id", doctorId)
-  //     .single();
-
-  //   if (doctorError || !doctors) {
-  //     toast.error("Doctor not found");
-  //     return;
-  //   }
-
-  //   // Check for existing appointments with a buffer
-  //   const rangeStart = new Date(startTime).getTime();
-  //   const rangeEnd = new Date(endTime).getTime() + 36000;
-
-  //   const { data: existingAppointments, error: appointmentError } =
-  //     await supabase
-  //       .from("appointments")
-  //       .select("id, start_time, end_time")
-  //       .eq("doctor_id", doctorId)
-  //       .lt("start_time", rangeStart)
-  //       .gt("end_time", rangeEnd);
-
-  //   console.log(existingAppointments);
-  //   if (appointmentError) {
-  //     toast.error("Error checking doctor's availability");
-  //     console.log(appointmentError);
-  //     return;
-  //   }
-
-  //   if (existingAppointments && existingAppointments.length > 0) {
-  //     toast.error("Doctor is not available at the selected time");
-  //     return;
-  //   }
-
-  //   // Create appointment
-  //   const { data: appointment, error: bookingError } = await supabase
-  //     .from("appointments")
-  //     .insert([
-  //       {
-  //         doctor_id: doctorId,
-  //         patient_id: user.id, // Replace with actual patient ID
-  //         start_time: startTime,
-  //         end_time: endTime,
-  //         appointment_type: appointmentType,
-  //         status: "scheduled",
-  //         notes, // Add any additional notes if needed
-  //       },
-  //     ]);
-
-  //   if (bookingError) {
-  //     console.log(bookingError);
-  //     toast.error("Error booking the appointment");
-  //     return;
-  //   }
-
-  //   toast.success("Appointment booked successfully");
-  //   setError("");
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -95,16 +24,6 @@ export default function AppointmentBooking({ user, doctors }) {
     const startDate = new Date(`${selectedDate}T${selectedTime}`);
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Assuming 1-hour appointment
 
-    // Format to YYYY-MM-DD HH:MM:SS
-    const formatDate = (date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-      const day = String(date.getDate()).padStart(2, "0");
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const seconds = String(date.getSeconds()).padStart(2, "0");
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    };
 
     const startTime = formatDate(startDate);
     const endTime = formatDate(endDate);

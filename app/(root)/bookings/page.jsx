@@ -4,7 +4,7 @@ import React from "react";
 
 async function Booking() {
   const supabase = createClient();
-
+  
   const { 
     data: { user },
     error: err,

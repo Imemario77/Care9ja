@@ -1,13 +1,43 @@
 import React from "react";
 import { Calendar, Users, MessageCircle, FileText } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
+import { formatDate, parseTimestamp } from "@/utils/functions";
 
-export default function DoctorDashboard({ profile, user }) {
-  const appointments = [
-    { id: 1, patientName: "John Doe", time: "10:00 AM", type: "Video Call" },
-    { id: 2, patientName: "Jane Smith", time: "11:30 AM", type: "In-person" },
-    { id: 3, patientName: "Bob Johnson", time: "2:00 PM", type: "Video Call" },
-  ];
+export default async function DoctorDashboard({ profile, user, dcProfile }) {
+  const supabase = createClient();
+
+  //  get the count of patient's
+  const {
+    data: { count },
+    error,
+  } = await supabase
+    .from("chats")
+    .select("count")
+    .eq("doctor_id", dcProfile?.id)
+    .single();
+
+  // get the total meeting for today
+
+  const todayTime = new Date(new Date().setHours(0, 0, 0, 0));
+  const tommorowTime = new Date(new Date().setHours(24, 0, 0, 0));
+
+  const { data: appointments, error: appointmentsError } = await supabase
+    .from("appointments")
+    .select(
+      `id,
+      appointment_type,
+      status,
+      start_time,
+      user:patient_id (
+          full_name,
+          id
+      )
+      `
+    )
+    .eq("doctor_id", dcProfile?.id)
+    .lte("start_time", formatDate(tommorowTime))
+    .gte("start_time", formatDate(todayTime));
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -35,7 +65,7 @@ export default function DoctorDashboard({ profile, user }) {
                             Today's Appointments
                           </dt>
                           <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                            {appointments.length}
+                            {appointments?.length || 0}
                           </dd>
                         </dl>
                       </div>
@@ -54,7 +84,7 @@ export default function DoctorDashboard({ profile, user }) {
                             Total Patients
                           </dt>
                           <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                            128
+                            {count || 0}
                           </dd>
                         </dl>
                       </div>
@@ -62,7 +92,7 @@ export default function DoctorDashboard({ profile, user }) {
                   </div>
                 </div>
                 <Link
-                  href="/chat"
+                  href="/messages"
                   className="bg-white overflow-hidden shadow rounded-lg"
                 >
                   <div className="p-5">
@@ -113,15 +143,17 @@ export default function DoctorDashboard({ profile, user }) {
                   </div>
                   <ul className="divide-y divide-gray-200">
                     {appointments.map((appointment) => (
-                      <li key={appointment.id}>
+                      <li key={appointment?.id}>
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-sky-600 truncate">
-                              {appointment.patientName}
+                              {appointment.user.full_name}
                             </p>
                             <div className="ml-2 flex-shrink-0 flex">
                               <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                {appointment.type}
+                                {appointment.appointment_type === "video"
+                                  ? "Video call"
+                                  : "In-person"}
                               </p>
                             </div>
                           </div>
@@ -129,7 +161,7 @@ export default function DoctorDashboard({ profile, user }) {
                             <div className="sm:flex">
                               <p className="flex items-center text-sm text-gray-500">
                                 <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                                {appointment.time}
+                                {parseTimestamp(appointment.start_time)?.time}
                               </p>
                             </div>
                           </div>

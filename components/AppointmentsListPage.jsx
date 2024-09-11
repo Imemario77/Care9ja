@@ -9,48 +9,10 @@ import {
   Search,
   ChevronDown,
 } from "lucide-react";
+import { parseTimestamp } from "@/utils/functions";
 
-export default function AppointmentsPage() {
-  const [filter, setFilter] = useState("upcoming");
-
-  const appointments = [
-    {
-      id: 1,
-      doctorName: "Dr. Sarah Johnson",
-      specialty: "Cardiologist",
-      time: "10:00 AM",
-      date: "2024-08-30",
-      type: "Video Call",
-      status: "upcoming",
-    },
-    {
-      id: 2,
-      doctorName: "Dr. Michael Lee",
-      specialty: "Dermatologist",
-      time: "2:30 PM",
-      date: "2024-09-02",
-      type: "In-person",
-      status: "upcoming",
-    },
-    {
-      id: 3,
-      doctorName: "Dr. Emily Chen",
-      specialty: "Pediatrician",
-      time: "11:15 AM",
-      date: "2024-08-20",
-      type: "Video Call",
-      status: "past",
-    },
-    {
-      id: 4,
-      doctorName: "Dr. David Wilson",
-      specialty: "Orthopedist",
-      time: "3:45 PM",
-      date: "2024-09-10",
-      type: "In-person",
-      status: "upcoming",
-    },
-  ];
+export default function AppointmentsPage({ appointments }) {
+  const [filter, setFilter] = useState("scheduled");
 
   const filteredAppointments = appointments.filter(
     (appointment) => filter === "all" || appointment.status === filter
@@ -77,8 +39,9 @@ export default function AppointmentsPage() {
                     onChange={(e) => setFilter(e.target.value)}
                   >
                     <option value="all">All Appointments</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="past">Past</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <ChevronDown className="h-4 w-4" />
@@ -104,21 +67,26 @@ export default function AppointmentsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <p className="text-sm font-medium text-sky-600 truncate">
-                              {appointment.doctorName}
+                              {appointment.user.specialization && "Dr. "}
+                              {appointment.user.full_name}
                             </p>
-                            <p className="ml-2 text-sm text-gray-500">
-                              {appointment.specialty}
-                            </p>
+                            {appointment.user.specialization && (
+                              <p className="ml-2 text-sm text-gray-500">
+                                {appointment.user.specialization}
+                              </p>
+                            )}
                           </div>
                           <div className="ml-2 flex-shrink-0 flex">
                             <p
                               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                appointment.type === "Video Call"
+                                appointment.appointment_type === "video"
                                   ? "bg-green-100 text-green-800"
                                   : "bg-blue-100 text-blue-800"
                               }`}
                             >
-                              {appointment.type}
+                              {appointment.appointment_type === "video"
+                                ? "Video call"
+                                : "In-person"}
                             </p>
                           </div>
                         </div>
@@ -126,20 +94,20 @@ export default function AppointmentsPage() {
                           <div className="sm:flex">
                             <p className="flex items-center text-sm text-gray-500">
                               <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                              {appointment.date}
+                              {parseTimestamp(appointment?.start_time).date}
                             </p>
                             <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                               <Clock className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                              {appointment.time}
+                              {parseTimestamp(appointment?.start_time).time}
                             </p>
                           </div>
                           <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                            {appointment.type === "Video Call" ? (
+                            {appointment.appointment_type === "video" ? (
                               <Video className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
                             ) : (
                               <MapPin className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
                             )}
-                            {appointment.type === "Video Call"
+                            {appointment.appointment_type === "video"
                               ? "Join Call"
                               : "Get Directions"}
                           </div>

@@ -7,10 +7,13 @@ import {
   ArrowLeft,
   ImageIcon,
   X,
+  CheckCircle,
+  Circle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { parseTimestamp } from "@/utils/functions";
 
 export default function ChatInterface({ accounts, activeAccount, userId }) {
   const [selectedAccount, setSelectedAccount] = useState(activeAccount || null);
@@ -21,7 +24,8 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   const fileInputRef = useRef(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [messages, setMessages] = useState([]);
-
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const lastMessageRef = useRef(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -51,20 +55,29 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
 
   useEffect(() => {
     if (selectedAccount) {
-      // Fetch existing messages
       fetchMessages();
 
-      // Set up real-time subscription
       const subscription = supabase
         .channel(`public:messages:chat_id=eq.${selectedAccount.id}`)
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "messages" },
+          { event: "INSERT", schema: "public", table: "messages" },
           handleNewMessage
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "messages" },
+          (payload) => {
+            console.log(payload.old.id);
+            setMessages((prevMessages) =>
+              prevMessages.map((msg) =>
+                msg.id === payload?.old?.id ? { ...msg, seen: true } : msg
+              )
+            );
+          }
         )
         .subscribe();
 
-      // Cleanup subscription on unmount
       return () => {
         subscription.unsubscribe();
       };
@@ -75,7 +88,6 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
     const userPresence = Object.values(onlineUsers).find((presence) =>
       presence.some((p) => p.user_id === account)
     );
-    console.log(userPresence);
     return Boolean(userPresence);
   };
 
@@ -90,8 +102,36 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
       if (error) throw error;
 
       setMessages(data);
+
+      // Mark messages as seen
+      const unseenMessages = data.filter(
+        (msg) => msg.sender_id !== userId && !msg.seen
+      );
+      if (unseenMessages.length > 0) {
+        await markMessagesAsSeen(unseenMessages.map((msg) => msg.id));
+      }
     } catch (error) {
       console.error("Error fetching messages:", error);
+    }
+  };
+
+  const markMessagesAsSeen = async (messageIds) => {
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .update({ seen: true })
+        .in("id", messageIds);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          messageIds.includes(msg.id) ? { ...msg, seen: true } : msg
+        )
+      );
+    } catch (error) {
+      console.error("Error marking messages as seen:", error);
     }
   };
 
@@ -100,7 +140,6 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
       const file = e.target.files[0];
       setSelectedImage(file);
 
-      // Create image preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -118,7 +157,6 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   };
 
   const uploadImage = async (file) => {
-    const supabase = createClient();
     const fileExt = file.name.split(".").pop();
     const fileName = `messages/${Math.random()}.${fileExt}`;
     const { data, error } = await supabase.storage
@@ -143,17 +181,26 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
           imageUrl = await uploadImage(selectedImage);
         }
 
+        const newMessage = {
+          content: message,
+          sender_id: userId,
+          chat_id: selectedAccount.id,
+          image: imageUrl,
+          receiver_id:
+            selectedAccount.user?.id || selectedAccount.user?.user?.id,
+          seen: false,
+          sent_at: new Date().toISOString(),
+        };
+
         const { data, error } = await supabase
           .from("messages")
-          .insert({
-            content: message,
-            sender_id: userId,
-            chat_id: selectedAccount.id,
-            image: imageUrl,
-          })
+          .insert(newMessage)
+          .select()
           .single();
 
         if (error) throw error;
+        console.log(data);
+
         setMessage("");
         setSelectedImage(null);
         setImagePreview(null);
@@ -166,6 +213,9 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   const handleNewMessage = (payload) => {
     console.log(payload);
     setMessages((prevMessages) => [...prevMessages, payload.new]);
+    if (payload.new.sender_id !== userId) {
+      markMessagesAsSeen([payload.new.id]);
+    }
   };
 
   const handleAccountSelect = (account) => {
@@ -190,6 +240,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                   isSelected={selectedAccount?.id === account.id}
                   onClick={() => handleAccountSelect(account)}
                   isAccountOnline={isAccountOnline}
+                  unreadCount={unreadCounts[account.id] || 0}
                 />
               ))}
             </nav>
@@ -210,35 +261,20 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                 {selectedAccount
                   ? selectedAccount.user?.full_name ||
                     selectedAccount.user?.user?.full_name
-                  : "Select a account"}
+                  : "Select an account"}
                 <ChevronDown className="absolute right-4 top-3 h-5 w-5 text-gray-400" />
               </button>
               {isDropdownOpen && (
                 <div className="absolute z-10 mt-[100px] w-full bg-white shadow-lg rounded-md">
                   {accounts.map((account) => (
-                    <button
+                    <AccountButton
                       key={account.id}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center space-x-3"
+                      account={account}
+                      isSelected={selectedAccount?.id === account.id}
                       onClick={() => handleAccountSelect(account)}
-                    >
-                      <img
-                        className="h-10 w-10 rounded-full"
-                        src={
-                          account.user?.user?.profile_picture_url ||
-                          account.user?.profile_picture_url
-                        }
-                        alt=""
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {account.user?.user?.full_name ||
-                            account.user?.full_name}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {account.user?.specialization}
-                        </p>
-                      </div>
-                    </button>
+                      isAccountOnline={isAccountOnline}
+                      unreadCount={unreadCounts[account.id] || 0}
+                    />
                   ))}
                 </div>
               )}
@@ -265,12 +301,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                             selectedAccount.user?.user?.id
                         )
                           ? "bg-green-400"
-                          : isAccountOnline(
-                              selectedAccount.user?.id ||
-                                selectedAccount.user?.user?.id
-                            ) === false
-                          ? "bg-gray-300"
-                          : "bg-yellow-400"
+                          : "bg-gray-300"
                       }`}
                     />
                   </div>
@@ -338,7 +369,7 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
           ) : (
             <div className="flex-1 flex items-center justify-center bg-gray-50">
               <p className="text-gray-500 text-lg">
-                Select a account to start chatting
+                Select an account to start chatting
               </p>
             </div>
           )}
@@ -372,20 +403,34 @@ const MessageList = ({ messages, userId }) => (
               className="mt-2 max-w-full rounded"
             />
           )}
-          <p
-            className={`text-xs mt-1 ${
-              msg.sender_id === userId ? "text-sky-100" : "text-gray-500"
-            }`}
-          >
-            {msg.timestamp}
-          </p>
+          <div className="flex items-center justify-end mt-1 space-x-1">
+            <p
+              className={`text-xs ${
+                msg.sender_id === userId ? "text-sky-100" : "text-gray-500"
+              }`}
+            >
+              {parseTimestamp(msg.sent_at).time}
+            </p>
+            {msg.sender_id === userId &&
+              (msg.seen ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <Circle className="h-4 w-4 text-sky-200" />
+              ))}
+          </div>
         </div>
       </div>
     ))}
   </div>
 );
 
-const AccountButton = ({ account, isSelected, onClick, isAccountOnline }) => (
+const AccountButton = ({
+  account,
+  isSelected,
+  onClick,
+  isAccountOnline,
+  unreadCount,
+}) => (
   <button
     className={`w-full text-left px-4 py-2 flex items-center space-x-3 hover:bg-gray-100 ${
       isSelected ? "bg-gray-100" : ""
@@ -411,10 +456,7 @@ const AccountButton = ({ account, isSelected, onClick, isAccountOnline }) => (
         className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white ${
           isAccountOnline(account.user?.id || account.user?.user?.id)
             ? "bg-green-400"
-            : isAccountOnline(account.user?.id || account.user?.user?.id) ===
-              false
-            ? "bg-gray-300"
-            : "bg-yellow-400"
+            : "bg-gray-300"
         }`}
       />
     </div>
@@ -426,5 +468,10 @@ const AccountButton = ({ account, isSelected, onClick, isAccountOnline }) => (
         {account.user?.specialization}
       </p>
     </div>
+    {unreadCount > 0 && (
+      <div className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+        {unreadCount}
+      </div>
+    )}
   </button>
 );
