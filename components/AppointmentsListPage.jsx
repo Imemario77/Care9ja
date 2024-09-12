@@ -61,6 +61,15 @@ export default function AppointmentsPage({ appointments }) {
 
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
+                  {filteredAppointments.length <= 0 && (
+                    <div className="px-4 py-4 sm:px-6">
+                      <p className="flex items-center text-sm text-gray-500">
+                        {filter !== "all"
+                          ? `No ${filter} appointment`
+                          : "No appointment"}
+                      </p>
+                    </div>
+                  )}
                   {filteredAppointments.map((appointment) => (
                     <li key={appointment.id}>
                       <div className="px-4 py-4 sm:px-6">

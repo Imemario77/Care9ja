@@ -4,33 +4,44 @@ import {
   Clock,
   MessageCircle,
   FileText,
-  Activity,
   User,
+  Pill,
 } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+import { formatDate, parseTimestamp } from "@/utils/functions";
 
-export default function ClientDashboard({ profile, user }) {
-  const upcomingAppointments = [
-    {
-      id: 1,
-      doctorName: "Dr. Sarah Johnson",
-      time: "10:00 AM",
-      date: "2024-08-30",
-      type: "Video Call",
-    },
-    {
-      id: 2,
-      doctorName: "Dr. Michael Lee",
-      time: "2:30 PM",
-      date: "2024-09-02",
-      type: "In-person",
-    },
-  ];
+export default async function ClientDashboard({ profile, user, unread }) {
+  const supabase = createClient();
 
-  const medications = [
-    { id: 1, name: "Lisinopril", dosage: "10mg", frequency: "Once daily" },
-    { id: 2, name: "Metformin", dosage: "500mg", frequency: "Twice daily" },
-  ];
+  // get the total meeting for today
+  const todayTime = new Date(new Date());
+
+  const { data: appointments, error: appointmentsError } = await supabase
+    .from("appointments")
+    .select(
+      `id,
+      appointment_type,
+      status,
+      start_time,
+      user:doctor_id (
+      user:user_id(
+        full_name,
+        id
+        )
+      )
+      `
+    )
+    .eq("patient_id", user?.id)
+    .gte("start_time", formatDate(todayTime))
+    .limit(2);
+
+  const { data: medications, error } = await supabase
+    .from("medications")
+    .select("*")
+    .eq("patient_id", user?.id)
+    .order("updated_at", { ascending: false })
+    .limit(2);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -57,22 +68,29 @@ export default function ClientDashboard({ profile, user }) {
                           <dt className="text-sm font-medium text-gray-500 truncate">
                             Next Appointment
                           </dt>
-                          <dd className="mt-1 text-lg font-semibold text-gray-900">
-                            {upcomingAppointments[0].date} at{" "}
-                            {upcomingAppointments[0].time}
-                          </dd>
+                          {appointments.length >= 1 ? (
+                            <dd className="mt-1 text-lg font-semibold text-gray-900">
+                              {parseTimestamp(appointments[0].start_time).date}{" "}
+                              at{" "}
+                              {parseTimestamp(appointments[0].start_time).time}
+                            </dd>
+                          ) : (
+                            <dd className="mt-1 text-lg font-semibold text-gray-900">
+                              No Upcoming Meeting
+                            </dd>
+                          )}
                         </dl>
                       </div>
                     </div>
                   </div>
                   <div className="bg-gray-50 px-5 py-3">
                     <div className="text-sm">
-                      <a
-                        href="#"
+                      <Link
+                        href="appointments"
                         className="font-medium text-sky-700 hover:text-sky-900"
                       >
                         View all appointments
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -89,7 +107,7 @@ export default function ClientDashboard({ profile, user }) {
                             Messages
                           </dt>
                           <dd className="mt-1 text-lg font-semibold text-gray-900">
-                            3 unread
+                            {unread} unread
                           </dd>
                         </dl>
                       </div>
@@ -97,12 +115,12 @@ export default function ClientDashboard({ profile, user }) {
                   </div>
                   <div className="bg-gray-50 px-5 py-3">
                     <div className="text-sm">
-                      <a
-                        href="#"
+                      <Link
+                        href="messages"
                         className="font-medium text-sky-700 hover:text-sky-900"
                       >
                         Open messages
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -146,16 +164,25 @@ export default function ClientDashboard({ profile, user }) {
                     </h3>
                   </div>
                   <ul className="divide-y divide-gray-200">
-                    {upcomingAppointments.map((appointment) => (
+                    {appointments.length <= 0 && (
+                      <div className="px-4 py-4 sm:px-6">
+                        <p className="flex items-center text-sm text-gray-500">
+                          No appointment
+                        </p>
+                      </div>
+                    )}
+                    {appointments.map((appointment) => (
                       <li key={appointment.id}>
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-sky-600 truncate">
-                              {appointment.doctorName}
+                              {appointment.user.user.full_name}
                             </p>
                             <div className="ml-2 flex-shrink-0 flex">
                               <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                {appointment.type}
+                                {appointment.appointment_type === "video"
+                                  ? "Video call"
+                                  : "In-person"}
                               </p>
                             </div>
                           </div>
@@ -163,11 +190,17 @@ export default function ClientDashboard({ profile, user }) {
                             <div className="sm:flex">
                               <p className="flex items-center text-sm text-gray-500">
                                 <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                                {appointment.date}
+                                {
+                                  parseTimestamp(appointments[0].start_time)
+                                    .date
+                                }
                               </p>
                               <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                                 <Clock className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                                {appointment.time}
+                                {
+                                  parseTimestamp(appointments[0].start_time)
+                                    .time
+                                }
                               </p>
                             </div>
                           </div>
@@ -178,10 +211,16 @@ export default function ClientDashboard({ profile, user }) {
                 </div>
 
                 <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                  <div className="px-4 py-5 sm:px-6">
+                  <div className="px-4 py-5 sm:px-6 flex justify-between">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">
                       Current Medications
                     </h3>
+                    <Link
+                      href={`medication/view?id=${user?.id}`}
+                      className="font-medium text-sky-700 hover:text-sky-900"
+                    >
+                      View all medications
+                    </Link>
                   </div>
                   <ul className="divide-y divide-gray-200">
                     {medications.map((medication) => (
@@ -195,7 +234,7 @@ export default function ClientDashboard({ profile, user }) {
                           <div className="mt-2 sm:flex sm:justify-between">
                             <div className="sm:flex">
                               <p className="flex items-center text-sm text-gray-500">
-                                <Activity className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
+                                <Pill className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
                                 {medication.dosage}
                               </p>
                               <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
@@ -226,10 +265,13 @@ export default function ClientDashboard({ profile, user }) {
                       <User className="mr-2 h-5 w-5" />
                       Book Appointment
                     </Link>
-                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <Link
+                      href="messages"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    >
                       <MessageCircle className="mr-2 h-5 w-5" />
                       Start Chat Consultation
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>

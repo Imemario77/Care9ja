@@ -4,7 +4,12 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { formatDate, parseTimestamp } from "@/utils/functions";
 
-export default async function DoctorDashboard({ profile, user, dcProfile }) {
+export default async function DoctorDashboard({
+  profile,
+  user,
+  dcProfile,
+  unread,
+}) {
   const supabase = createClient();
 
   //  get the count of patient's
@@ -106,7 +111,7 @@ export default async function DoctorDashboard({ profile, user, dcProfile }) {
                             Unread Messages
                           </dt>
                           <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                            5
+                            {unread}
                           </dd>
                         </dl>
                       </div>
@@ -142,6 +147,13 @@ export default async function DoctorDashboard({ profile, user, dcProfile }) {
                     </h3>
                   </div>
                   <ul className="divide-y divide-gray-200">
+                    {appointments.length <= 0 && (
+                      <div className="px-4 py-4 sm:px-6">
+                        <p className="flex items-center text-sm text-gray-500">
+                          No appointment for today
+                        </p>
+                      </div>
+                    )}
                     {appointments.map((appointment) => (
                       <li key={appointment?.id}>
                         <div className="px-4 py-4 sm:px-6">

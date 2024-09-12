@@ -18,6 +18,19 @@ async function Dashboard() {
     .limit(1)
     .single();
 
+  const {
+    data: { count },
+    error: unreadErr,
+  } = await supabase
+    .from("messages")
+    .select("count")
+    .eq("receiver_id", user?.id)
+    .eq("seen", false)
+    .limit(1)
+    .single();
+
+  console.log(count, "msg");
+
   const isDoctor = data.user_type === "doctor" ? true : false;
   let dcProfile = null;
 
@@ -40,10 +53,11 @@ async function Dashboard() {
         <DoctorDashboard
           user={user}
           profile={data}
+          unread={count || 0}
           dcProfile={dcProfile || null}
         />
       ) : (
-        <ClientDashboard user={user} profile={data} />
+        <ClientDashboard user={user} profile={data} unread={count || 0} />
       )}
     </div>
   );

@@ -25,7 +25,8 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   const [imagePreview, setImagePreview] = useState(null);
   const [messages, setMessages] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
-  const lastMessageRef = useRef(null);
+  const messageListRef = useRef(null);
+  const lastSeenMessageRef = useRef(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -54,6 +55,38 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   }, [userId]);
 
   useEffect(() => {
+    fetchUnreadCounts();
+  }, []);
+
+  const fetchUnreadCounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("chat_id")
+        .eq("receiver_id", userId)
+        .eq("seen", false);
+
+      if (error) throw error;
+
+      const counts = countUniqueChatIds(data);
+      setUnreadCounts(counts);
+    } catch (error) {
+      console.error("Error fetching unread counts:", error);
+    }
+  };
+
+  function countUniqueChatIds(messages) {
+    const chatIdCounts = {};
+    if (Array.isArray(messages)) {
+      for (const message of messages) {
+        const chatId = message.chat_id;
+        chatIdCounts[chatId] = (chatIdCounts[chatId] || 0) + 1;
+      }
+    }
+    return chatIdCounts;
+  }
+
+  useEffect(() => {
     if (selectedAccount) {
       fetchMessages();
 
@@ -68,12 +101,12 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "messages" },
           (payload) => {
-            console.log(payload.old.id);
-            setMessages((prevMessages) =>
-              prevMessages.map((msg) =>
-                msg.id === payload?.old?.id ? { ...msg, seen: true } : msg
-              )
-            );
+            selectedAccount.id === payload.new.chat_id &&
+              setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                  msg.id === payload?.old?.id ? { ...msg, seen: true } : msg
+                )
+              );
           }
         )
         .subscribe();
@@ -103,13 +136,40 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
 
       setMessages(data);
 
-      // Mark messages as seen
+      // Find the last seen message
+      const lastSeenMessage = data
+        .filter((msg) => msg.sender_id !== userId)
+        .reverse()
+        .find((msg) => msg.seen);
+
+      // Set the ref for the last seen message
+      if (lastSeenMessage) {
+        lastSeenMessageRef.current = lastSeenMessage.id;
+      }
+
+      // Mark unseen messages as seen
       const unseenMessages = data.filter(
         (msg) => msg.sender_id !== userId && !msg.seen
       );
       if (unseenMessages.length > 0) {
         await markMessagesAsSeen(unseenMessages.map((msg) => msg.id));
       }
+
+      // Scroll to the last seen message after a short delay to ensure DOM update
+      setTimeout(() => {
+        if (lastSeenMessageRef.current) {
+          const element = document.getElementById(
+            `message-${lastSeenMessageRef.current}`
+          );
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
+        } else {
+          // If no last seen message, scroll to bottom
+          messageListRef.current.scrollTop =
+            messageListRef.current.scrollHeight;
+        }
+      }, 100);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -199,7 +259,6 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
           .single();
 
         if (error) throw error;
-        console.log(data);
 
         setMessage("");
         setSelectedImage(null);
@@ -211,16 +270,27 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   };
 
   const handleNewMessage = (payload) => {
-    console.log(payload);
-    setMessages((prevMessages) => [...prevMessages, payload.new]);
-    if (payload.new.sender_id !== userId) {
-      markMessagesAsSeen([payload.new.id]);
+    if (selectedAccount.id === payload.new.chat_id) {
+      setMessages((prevMessages) => [...prevMessages, payload.new]);
+      if (payload.new.sender_id !== userId) {
+        markMessagesAsSeen([payload.new.id]);
+      }
+    } else {
+      // Update unread count for other chats
+      setUnreadCounts((prevCounts) => ({
+        ...prevCounts,
+        [payload.new.chat_id]: (prevCounts[payload.new.chat_id] || 0) + 1,
+      }));
     }
   };
 
   const handleAccountSelect = (account) => {
     setSelectedAccount(account);
     setIsDropdownOpen(false);
+    setUnreadCounts((prevCounts) => ({
+      ...prevCounts,
+      [account.id]: 0,
+    }));
   };
 
   return (
@@ -317,7 +387,12 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                 </div>
               </div>
 
-              <MessageList messages={messages} userId={userId} />
+              <MessageList
+                messages={messages}
+                userId={userId}
+                messageListRef={messageListRef}
+                lastSeenMessageRef={lastSeenMessageRef}
+              />
 
               <div className="bg-white border-t border-gray-200 p-4">
                 {imagePreview && (
@@ -379,44 +454,57 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   );
 }
 
-const MessageList = ({ messages, userId }) => (
-  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+const MessageList = ({
+  messages,
+  userId,
+  messageListRef,
+  lastSeenMessageRef,
+}) => (
+  <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messageListRef}>
     {messages.map((msg) => (
       <div
         key={msg.id}
+        id={`message-${msg.id}`}
         className={`flex ${
           msg.sender_id === userId ? "justify-end" : "justify-start"
         }`}
       >
         <div
-          className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 rounded-lg ${
-            msg.sender_id === userId
-              ? "bg-sky-500 text-white"
-              : "bg-gray-200 text-gray-900"
+          key={msg.id}
+          className={`flex ${
+            msg.sender_id === userId ? "justify-end" : "justify-start"
           }`}
         >
-          {msg.content && <p>{msg.content}</p>}
-          {msg.image && (
-            <img
-              src={msg.image}
-              alt="Shared image"
-              className="mt-2 max-w-full rounded"
-            />
-          )}
-          <div className="flex items-center justify-end mt-1 space-x-1">
-            <p
-              className={`text-xs ${
-                msg.sender_id === userId ? "text-sky-100" : "text-gray-500"
-              }`}
-            >
-              {parseTimestamp(msg.sent_at).time}
-            </p>
-            {msg.sender_id === userId &&
-              (msg.seen ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <Circle className="h-4 w-4 text-sky-200" />
-              ))}
+          <div
+            className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 rounded-lg ${
+              msg.sender_id === userId
+                ? "bg-sky-500 text-white"
+                : "bg-gray-200 text-gray-900"
+            }`}
+          >
+            {msg.content && <p>{msg.content}</p>}
+            {msg.image && (
+              <img
+                src={msg.image}
+                alt="Shared image"
+                className="mt-2 max-w-full rounded"
+              />
+            )}
+            <div className="flex items-center justify-end mt-1 space-x-1">
+              <p
+                className={`text-xs ${
+                  msg.sender_id === userId ? "text-sky-100" : "text-gray-500"
+                }`}
+              >
+                {parseTimestamp(msg.sent_at).time}
+              </p>
+              {msg.sender_id === userId &&
+                (msg.seen ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Circle className="h-4 w-4 text-sky-200" />
+                ))}
+            </div>
           </div>
         </div>
       </div>
@@ -430,48 +518,50 @@ const AccountButton = ({
   onClick,
   isAccountOnline,
   unreadCount,
-}) => (
-  <button
-    className={`w-full text-left px-4 py-2 flex items-center space-x-3 hover:bg-gray-100 ${
-      isSelected ? "bg-gray-100" : ""
-    }`}
-    onClick={onClick}
-  >
-    <div className="relative">
-      <img
-        className="h-10 w-10 rounded-full"
-        src={
-          account.user?.user?.profile_picture_url ||
-          account.user.profile_picture_url
-        }
-        alt={`${
-          account.user?.user?.full_name || account.user.full_name
-        }'s profile`}
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = "/placeholder-profile.png";
-        }}
-      />
-      <span
-        className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white ${
-          isAccountOnline(account.user?.id || account.user?.user?.id)
-            ? "bg-green-400"
-            : "bg-gray-300"
-        }`}
-      />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-gray-900 truncate">
-        {account.user?.user?.full_name || account.user.full_name}
-      </p>
-      <p className="text-sm text-gray-500 truncate">
-        {account.user?.specialization}
-      </p>
-    </div>
-    {unreadCount > 0 && (
-      <div className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-        {unreadCount}
+}) => {
+  return (
+    <button
+      className={`w-full text-left px-4 py-2 flex items-center space-x-3 hover:bg-gray-100 ${
+        isSelected ? "bg-gray-100" : ""
+      }`}
+      onClick={onClick}
+    >
+      <div className="relative">
+        <img
+          className="h-10 w-10 rounded-full"
+          src={
+            account.user?.user?.profile_picture_url ||
+            account.user.profile_picture_url
+          }
+          alt={`${
+            account.user?.user?.full_name || account.user.full_name
+          }'s profile`}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/placeholder-profile.png";
+          }}
+        />
+        <span
+          className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white ${
+            isAccountOnline(account.user?.id || account.user?.user?.id)
+              ? "bg-green-400"
+              : "bg-gray-300"
+          }`}
+        />
       </div>
-    )}
-  </button>
-);
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 truncate">
+          {account.user?.user?.full_name || account.user.full_name}
+        </p>
+        <p className="text-sm text-gray-500 truncate">
+          {account.user?.specialization}
+        </p>
+      </div>
+      {unreadCount > 0 && (
+        <div className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+          {unreadCount}
+        </div>
+      )}
+    </button>
+  );
+};

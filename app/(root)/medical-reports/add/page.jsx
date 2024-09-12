@@ -1,17 +1,14 @@
-import DoctorPatientsList from "@/components/PatientsList";
+import AddMedicalReport from "@/components/AddMedicalReport";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import React from "react";
 
-async function MyPatients() {
+async function Add() {
   const supabase = createClient();
 
   const {
     data: { user },
     error: err,
   } = await supabase.auth.getUser();
-
-  let dc_id = null;
 
   const { data: doctor_account } = await supabase
     .from("doctorprofiles")
@@ -20,32 +17,27 @@ async function MyPatients() {
     .limit(1)
     .single();
 
-  if (doctor_account) {
-    dc_id = doctor_account.id;
-  } else {
+  if (!doctor_account) {
     redirect("/doctors");
   }
 
   const { data, error } = await supabase
     .from("chats")
     .select(
-      `
-       user:patient_id (
+      `user:patient_id (
           full_name,
-          profile_picture_url,
           id
-        )
-      `
+    )`
     )
-    .eq("doctor_id", dc_id);
+    .eq("doctor_id", doctor_account.id);
 
-  console.log(data);
+  if (error) {
+    console.error("Error fetching patients:", error);
+  }
 
   return (
-    <div>
-      <DoctorPatientsList patients={data} />
-    </div>
+    <AddMedicalReport patients={data || []} doctorId={doctor_account.id} />
   );
 }
 
-export default MyPatients;
+export default Add;
