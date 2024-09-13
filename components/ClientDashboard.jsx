@@ -145,12 +145,12 @@ export default async function ClientDashboard({ profile, user, unread }) {
                   </div>
                   <div className="bg-gray-50 px-5 py-3">
                     <div className="text-sm">
-                      <a
-                        href="#"
+                      <Link
+                        href={`/medical-reports/view?id=${user.id}`}
                         className="font-medium text-sky-700 hover:text-sky-900"
                       >
                         View records
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>

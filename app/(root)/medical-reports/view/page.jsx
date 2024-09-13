@@ -58,6 +58,7 @@ async function View({ searchParams: { id } }) {
         `
       )
       .eq("patient_id", id)
+      .neq("status", "Draft")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -70,7 +71,7 @@ async function View({ searchParams: { id } }) {
   console.log(medicalReportData);
 
   console.log(isDoc);
-  return <ViewMedicalReports reports={medicalReportData} />;
+  return <ViewMedicalReports reports={medicalReportData} id={id} />;
 }
 
 export default View;

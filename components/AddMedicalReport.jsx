@@ -165,7 +165,6 @@ const AddMedicalReport = ({ doctorId, patients }) => {
                   >
                     <option value="Draft">Draft</option>
                     <option value="Completed">Completed</option>
-                    <option value="Reviewed">Reviewed</option>
                   </select>
                 </div>
 

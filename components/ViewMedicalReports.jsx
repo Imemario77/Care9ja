@@ -1,15 +1,22 @@
 import { FileText, Eye, Plus } from "lucide-react";
 import Link from "next/link";
 
-const ViewMedicalReports = ({ reports }) => {
+const ViewMedicalReports = ({ reports, id }) => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="py-10">
         <header>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between">
             <h1 className="text-3xl font-bold leading-tight text-gray-900">
               Medical Reports
             </h1>
+            <Link
+              href={`/medical-reports/view?id=${id}`}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+            >
+              <Plus className="flex-shrink-0 mr-1.5 h-5 w-5" />
+              Add New Report
+            </Link>
           </div>
         </header>
         <main>
@@ -53,7 +60,7 @@ const ViewMedicalReports = ({ reports }) => {
                           </div>
                           <div className="mt-2 flex justify-end">
                             <Link
-                              href={`/medical-report/${report.id}`}
+                              href={`/medical-reports/view/${report.id}`}
                               className="text-sky-600 hover:text-sky-900"
                             >
                               <Eye className="h-5 w-5" />

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, User, Plus, Eye } from "lucide-react";
+import { Search, User, Plus, Eye, BriefcaseMedicalIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -62,6 +62,7 @@ export default function DoctorPatientsList({ patients }) {
                                   width="40"
                                   height="40"
                                   src={patient.user.profile_picture_url}
+                                  alt={patient.user.full_name + "profile image"}
                                 />
                               ) : (
                                 <User className="h-10 w-10 rounded-full bg-gray-200 p-2" />
@@ -77,6 +78,12 @@ export default function DoctorPatientsList({ patients }) {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            <Link
+                              href={`medical-reports/view?id=${patient.user.id}`}
+                              className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+                            >
+                              <BriefcaseMedicalIcon className="h-5 w-5 text-gray-400" />
+                            </Link>
                             <Link
                               href={`medication/add?id=${patient.user.id}`}
                               className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
