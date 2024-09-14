@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import useSupabaseUser from "@/utils/hooks/useSupabaseUser";
+import Image from "next/image";
 
 export default function Header({ user }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -74,7 +75,9 @@ export default function Header({ user }) {
                   }
                 >
                   <span className="sr-only">Open user menu</span>
-                  <img
+                  <Image
+                    width={32}
+                    height={32}
                     className="h-8 w-8 rounded-full"
                     src={user.profile_picture_url}
                     alt="User avatar"
@@ -165,7 +168,9 @@ export default function Header({ user }) {
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-4">
               <div className="flex-shrink-0">
-                <img
+                <Image
+                  width={32}
+                  height={32}
                   className="h-10 w-10 rounded-full"
                   src={user.profile_picture_url}
                   alt="User avatar"
