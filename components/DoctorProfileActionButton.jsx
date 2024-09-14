@@ -62,7 +62,7 @@ function DoctorProfileActionButton({ patientId, doctorId }) {
   return (
     <div className="flex gap-4">
       <button
-        onClick={() => router.push(`/bookings/${doctorId}`)}
+        onClick={() => router.push(`/bookings`)}
         className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition"
         disabled={loading}
       >
