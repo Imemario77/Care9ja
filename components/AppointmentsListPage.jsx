@@ -11,13 +11,52 @@ import {
 } from "lucide-react";
 import { parseTimestamp } from "@/utils/functions";
 
+import { StreamVideoClient } from "@stream-io/video-react-sdk";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { streamTokenProvider } from "@/utils/actions/createStream";
+
 export default function AppointmentsPage({ appointments }) {
   const [filter, setFilter] = useState("scheduled");
-
+  const supabase = createClient();
+  const router = useRouter();
   const filteredAppointments = appointments.filter(
     (appointment) => filter === "all" || appointment.status === filter
   );
 
+  const handleVideoCall = async (appointment) => {
+    try {
+      // Get the current user
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (error) throw error;
+
+      // Create a Stream Video client
+      const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
+      const client = new StreamVideoClient({
+        apiKey,
+        user: {
+          id: user.id,
+          name: user.user_metadata.full_name,
+          image: user.user_metadata.avatar_url,
+        },
+        // You'll need to implement this function to get a Stream token
+        token: await streamTokenProvider(user.id),
+      });
+
+      // Create a call
+      const call = client.call("default", appointment.id);
+      await call.create({ ring: true });
+
+      // Redirect to the video call page
+      router.push(`/video-call/${appointment.id}`);
+    } catch (error) {
+      console.error("Error starting video call:", error);
+      // Handle error (e.g., show an error message to the user)
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="py-10">
@@ -112,7 +151,10 @@ export default function AppointmentsPage({ appointments }) {
                           </div>
                           <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                             {appointment.appointment_type === "video" ? (
-                              <Video className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
+                              <Video
+                                className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400"
+                                onClick={() => handleVideoCall(appointment)}
+                              />
                             ) : (
                               <MapPin className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
                             )}

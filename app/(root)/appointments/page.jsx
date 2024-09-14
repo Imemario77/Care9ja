@@ -2,6 +2,7 @@ import AppointmentsPage from "@/components/AppointmentsListPage";
 import { createClient } from "@/utils/supabase/server";
 import { useFormatedData } from "@/utils/functions";
 import React from "react";
+import StreamVideoProvider from "@/utils/providers/streamVideoProvider";
 
 async function AppointmentListPage() {
   const supabase = createClient();
@@ -52,9 +53,9 @@ async function AppointmentListPage() {
     .or(`doctor_id.eq.${dc_id || user.id},patient_id.eq.${user.id}`);
 
   return (
-    <div>
-      <AppointmentsPage appointments={useFormatedData(data) || []} />
-    </div>
+    <StreamVideoProvider>
+      <AppointmentsPage appointments={useFormatedData(data) || []} />{" "}
+    </StreamVideoProvider>
   );
 }
 
