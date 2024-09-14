@@ -1,74 +1,84 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-
+import React, { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { streamTokenProvider } from "@/utils/actions/createStream";
-
 import {
   CallControls,
-  CallingState,
-  CallParticipantsList,
   SpeakerLayout,
   StreamCall,
   StreamTheme,
   StreamVideo,
   StreamVideoClient,
-  useCallStateHooks,
 } from "@stream-io/video-react-sdk";
-
 import "@stream-io/video-react-sdk/dist/css/styles.css";
+import { useRouter } from "next/navigation";
+
+const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
+
+let streamClient = null;
+let call = null;
+
+const initializeStreamClient = async () => {
+  const supabase = createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    console.error("Error getting user:", userError);
+    return null;
+  }
+
+  const { data: userData, error: dataError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (dataError) {
+    console.error("Error getting user data:", dataError);
+    return null;
+  }
+
+  const token = await streamTokenProvider(user.id);
+
+  streamClient = new StreamVideoClient({
+    apiKey,
+    user: {
+      id: user.id,
+      name: userData.full_name,
+      image: userData.profile_picture_url,
+    },
+    token,
+  });
+
+  return streamClient;
+};
 
 const VideoCallInterface = ({ callId }) => {
-  const [client, setClient] = useState(null);
-  const [call, setCall] = useState(null);
-  const supabase = createClient();
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const initializeClient = async () => {
-      const {
-        data: { user },
-        error: err,
-      } = await supabase.auth.getUser();
-      if (err) {
-        console.error("Error getting user:", err);
-        return;
+    const setupCall = async () => {
+      if (!streamClient) {
+        streamClient = await initializeStreamClient();
       }
 
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error getting user:", error);
-        return;
+      if (streamClient && !call) {
+        call = streamClient.call("default", callId);
+        await call.join({ create: true });
       }
-      const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
-      const streamClient = new StreamVideoClient({
-        apiKey,
-        user: {
-          id: user.id,
-          name: data.full_name,
-          image: data.profile_picture_url,
-        },
-        token: await streamTokenProvider(user.id),
-      });
 
-      setClient(streamClient);
-
-      const setUpCall = streamClient.call("default", callId);
-      setUpCall.join({ create: true });
-      // setUpCall.getOrCreate();
-
-      setCall(setUpCall);
+      setIsLoading(false);
     };
 
-    initializeClient();
+    setupCall();
   }, [callId]);
 
-  if (!client || !call) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         Loading...
@@ -76,28 +86,24 @@ const VideoCallInterface = ({ callId }) => {
     );
   }
 
+  const handleCallEnd = () => {
+    router.push("/dashboard"); // Redirect to dashboard
+  };
+
   return (
-    <StreamVideo client={client}>
+    <StreamVideo client={streamClient}>
       <StreamCall call={call}>
-        <MyUILayout />
+        <MyUILayout onCallEnd={handleCallEnd} />
       </StreamCall>
     </StreamVideo>
   );
 };
 
-export const MyUILayout = () => {
-  const { useCallCallingState } = useCallStateHooks();
-  const callingState = useCallCallingState();
-
-  console.log(callingState);
-  if (callingState !== CallingState.JOINED) {
-    return <div>Loading...</div>;
-  }
-
+const MyUILayout = ({ onCallEnd }) => {
   return (
     <StreamTheme>
       <SpeakerLayout participantsBarPosition="bottom" />
-      <CallControls />
+      <CallControls onLeave={onCallEnd} />
     </StreamTheme>
   );
 };
