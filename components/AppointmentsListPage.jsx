@@ -42,7 +42,6 @@ export default function AppointmentsPage({ appointments }) {
           name: user.user_metadata.full_name,
           image: user.user_metadata.avatar_url,
         },
-        // You'll need to implement this function to get a Stream token
         token: await streamTokenProvider(user.id),
       });
 
@@ -54,7 +53,6 @@ export default function AppointmentsPage({ appointments }) {
       router.push(`/video-call/${appointment.id}`);
     } catch (error) {
       console.error("Error starting video call:", error);
-      // Handle error (e.g., show an error message to the user)
     }
   };
   return (
@@ -149,19 +147,24 @@ export default function AppointmentsPage({ appointments }) {
                               {parseTimestamp(appointment?.start_time).time}
                             </p>
                           </div>
-                          <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                            {appointment.appointment_type === "video" ? (
-                              <Video
-                                className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400"
-                                onClick={() => handleVideoCall(appointment)}
-                              />
-                            ) : (
+                          {appointment.appointment_type === "video" ? (
+                            <div
+                              className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 cursor-pointer"
+                              onClick={() => handleVideoCall(appointment)}
+                              title="Start call now "
+                            >
+                              <Video className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
+                              Join Call
+                            </div>
+                          ) : (
+                            <div
+                              className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0"
+                              title="Contact doctor to get directions"
+                            >
                               <MapPin className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                            )}
-                            {appointment.appointment_type === "video"
-                              ? "Join Call"
-                              : "Get Directions"}
-                          </div>
+                              Get Directions
+                            </div>
+                          )}
                         </div>
                       </div>
                     </li>
