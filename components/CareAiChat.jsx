@@ -18,6 +18,7 @@ const CareAiChat = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [imageData, setImageData] = useState(null);
+  const [imageType, setImageType] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -31,10 +32,12 @@ const CareAiChat = () => {
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
+    console.log(file);
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImageData(reader.result);
+        setImageType(file.type);
       };
       reader.readAsDataURL(file);
     }
@@ -56,7 +59,8 @@ const CareAiChat = () => {
         const aiResponse = await generateDoctorResponse(
           inputMessage,
           messages,
-          imageData
+          imageData,
+          imageType
         );
         const newAiMessage = {
           id: messages.length + 2,
