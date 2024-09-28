@@ -79,7 +79,7 @@ export default function Header({ user }) {
                     width={32}
                     height={32}
                     className="h-8 w-8 rounded-full"
-                    src={user.profile_picture_url}
+                    src={user.profile_picture_url || "/default-profile.jpeg"}
                     alt="User avatar"
                   />
                 </button>
@@ -172,7 +172,7 @@ export default function Header({ user }) {
                   width={32}
                   height={32}
                   className="h-10 w-10 rounded-full"
-                  src={user.profile_picture_url}
+                  src={user.profile_picture_url || "/default-profile.jpeg"}
                   alt="User avatar"
                 />
               </div>

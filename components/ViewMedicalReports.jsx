@@ -11,7 +11,7 @@ const ViewMedicalReports = ({ reports, id }) => {
               Medical Reports
             </h1>
             <Link
-              href={`/medical-reports/view?id=${id}`}
+              href={`/medical-reports/add?id=${id}`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
             >
               <Plus className="flex-shrink-0 mr-1.5 h-5 w-5" />

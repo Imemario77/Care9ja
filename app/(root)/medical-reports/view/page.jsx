@@ -45,6 +45,7 @@ async function View({ searchParams: { id } }) {
         `
       )
       .eq("doctor_id", doctor_account.id)
+      .eq("patient_id", id)
       .order("created_at", { ascending: false });
 
     medicalReportData = data;

@@ -5,6 +5,7 @@ import React from "react";
 
 async function Dashboard() {
   const supabase = createClient();
+  const medical_report = null;
 
   const {
     data: { user },
@@ -45,6 +46,23 @@ async function Dashboard() {
     if (doctor_account) {
       dcProfile = doctor_account;
     }
+  }
+
+  if (!isDoctor) {
+    const { data, error } = await supabase
+      .from("medical_reports")
+      .select(
+        `
+          *,
+          patient:patient_id (full_name)
+        `
+      )
+      .eq("patient_id", user.id)
+      .neq("status", "Draft")
+      .order("created_at", { ascending: false })
+      .single();
+
+    console.log(data);
   }
 
   return (

@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import Header from "@/components/Header";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import CareAiChat from "@/components/CareAiChat";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -46,7 +47,6 @@ export default async function RootLayout({ children }) {
 
   const { exists: isOnboarded, userData } = await checkUserAndGetData(user.id);
 
-
   if (!isOnboarded) {
     redirect("/onboarding");
   }
@@ -55,6 +55,7 @@ export default async function RootLayout({ children }) {
     <main>
       <Header user={userData} />
       {children}
+      <CareAiChat />
     </main>
   );
 }

@@ -360,7 +360,8 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
                       className="h-10 w-10 rounded-full"
                       src={
                         selectedAccount.user?.user?.profile_picture_url ||
-                        selectedAccount.user?.profile_picture_url
+                        selectedAccount.user?.profile_picture_url ||
+                        "/default-profile.jpeg"
                       }
                       alt=""
                     />
@@ -531,14 +532,15 @@ const AccountButton = ({
           className="h-10 w-10 rounded-full"
           src={
             account.user?.user?.profile_picture_url ||
-            account.user.profile_picture_url
+            account.user?.profile_picture_url ||
+            "/default-profile.jpeg"
           }
           alt={`${
             account.user?.user?.full_name || account.user.full_name
           }'s profile`}
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/placeholder-profile.png";
+            e.target.src = "/default-profile.jpeg";
           }}
         />
         <span
