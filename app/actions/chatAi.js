@@ -18,8 +18,14 @@ export async function generateDoctorResponse(
       model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       prompt = [
         {
-          text: `You are an AI doctor assistant called Care AI. Analyze the following image and the user's message: "${userMessage}". 
-          Provide medical advice based on the image and message, but always recommend consulting a real doctor for serious concerns. 
+          text: `You are an AI doctor assistant called Care AI.
+          Here's the chat history:
+          ${chatHistory.map((msg) => `${msg.sender}: ${msg.text}`).join("\n")}
+          Analyze the following image and the user's message: "${userMessage}". 
+          
+          Always try to understand the issue before saying they should consult a doctor
+          Give advice base on what you noticed from the conversation history and user's question
+          Provide medical advice based on the image and message, but always recommend consulting a real doctor for serious concerns apart from that don't talk about your consulting a real doctor . 
           If you're unsure or the image is unclear, say so.`,
         },
         {
@@ -37,7 +43,9 @@ export async function generateDoctorResponse(
       
       User's latest message: "${userMessage}"
       
-      Provide medical advice based on the user's message and chat history. Always recommend consulting a real doctor for serious concerns. If you're unsure, say so clearly.`;
+      Always try to understand the issue before saying they should consult a doctor
+      Give advice base on what you noticed from the conversation history and user's question
+      Provide medical advice based on the user's message and chat history. Always recommend consulting a real doctor for serious concerns apart from that don't talk about your consulting a real doctor . If you're unsure, say so clearly.`;
     }
 
     const result = await model.generateContent(prompt);
