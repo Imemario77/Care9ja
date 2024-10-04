@@ -11,7 +11,7 @@ const CareAiChat = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! I'm your AI doctor assistant. How can I help you today?",
+      text: "Hello! I'm CareAI your AI doctor assistant. How can I help you today?",
       sender: "system",
     },
   ]);
@@ -99,7 +99,7 @@ const CareAiChat = () => {
       {isChatOpen ? (
         <div className="bg-white rounded-lg shadow-2xl w-full sm:w-96 h-[70vh] sm:h-[600px] flex flex-col overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-lg flex justify-between items-center">
-            <h3 className="text-lg font-semibold">AI Doctor Assistant</h3>
+            <h3 className="text-lg font-semibold">CARE AI</h3>
             <button
               onClick={toggleChat}
               className="text-white hover:text-gray-200 transition-colors duration-200"

@@ -37,7 +37,7 @@ async function View({ searchParams: { id } }) {
     }
 
     const { data, error } = await supabase
-      .from("medical_reports")
+      .from("medical_ reports")
       .select(
         `
           *,
