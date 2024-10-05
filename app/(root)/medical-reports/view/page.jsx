@@ -23,6 +23,7 @@ async function View({ searchParams: { id } }) {
     if (!doctor_account) {
       redirect("/doctors");
     }
+
     isDoc = true;
     const { data: chat_data, error: errf } = await supabase
       .from("chats")
@@ -36,8 +37,9 @@ async function View({ searchParams: { id } }) {
       redirect("/dashboard");
     }
 
+    console.log(doctor_account);
     const { data, error } = await supabase
-      .from("medical_ reports")
+      .from("medical_reports")
       .select(
         `
           *,
@@ -48,6 +50,7 @@ async function View({ searchParams: { id } }) {
       .eq("patient_id", id)
       .order("created_at", { ascending: false });
 
+    console.log(data);
     medicalReportData = data;
   } else {
     const { data, error } = await supabase

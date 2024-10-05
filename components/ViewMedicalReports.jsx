@@ -24,7 +24,7 @@ const ViewMedicalReports = ({ reports, id }) => {
             <div className="px-4 py-8 sm:px-0">
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
-                  {reports.length === 0 ? (
+                  {reports?.length === 0 || reports === null ? (
                     <li className="px-4 py-4 sm:px-6">
                       <p className="text-sm text-gray-500">No reports found.</p>
                     </li>
