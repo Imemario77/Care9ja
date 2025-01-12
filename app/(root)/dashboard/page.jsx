@@ -1,3 +1,4 @@
+import AdminDashboard from "@/components/admin/admin";
 import ClientDashboard from "@/components/ClientDashboard";
 import DoctorDashboard from "@/components/DoctorDashboard";
 import { createClient } from "@/utils/supabase/server";
@@ -11,6 +12,10 @@ async function Dashboard() {
     data: { user },
     error: err,
   } = await supabase.auth.getUser();
+
+  if (user?.user_metadata?.admin) {
+    return <AdminDashboard />;
+  }
 
   const { data, error } = await supabase
     .from("users")
