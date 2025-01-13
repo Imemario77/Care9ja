@@ -13,7 +13,7 @@ import { formatDate, parseTimestamp } from "@/utils/functions";
 
 export default async function ClientDashboard({ profile, user, unread }) {
   const supabase = createClient();
-
+  console.log(user);
   // get the total meeting for today
   const todayTime = new Date(new Date());
 
@@ -36,6 +36,7 @@ export default async function ClientDashboard({ profile, user, unread }) {
     .gte("start_time", formatDate(todayTime))
     .limit(2);
 
+  console.log(appointments);
   const { data: medications, error } = await supabase
     .from("medications")
     .select("*")
@@ -68,7 +69,7 @@ export default async function ClientDashboard({ profile, user, unread }) {
                           <dt className="text-sm font-medium text-gray-500 truncate">
                             Next Appointment
                           </dt>
-                          {appointments.length >= 1 ? (
+                          {appointments?.length >= 1 ? (
                             <dd className="mt-1 text-lg font-semibold text-gray-900">
                               {parseTimestamp(appointments[0].start_time).date}{" "}
                               at{" "}
@@ -164,14 +165,14 @@ export default async function ClientDashboard({ profile, user, unread }) {
                     </h3>
                   </div>
                   <ul className="divide-y divide-gray-200">
-                    {appointments.length <= 0 && (
+                    {appointments?.length <= 0 && (
                       <div className="px-4 py-4 sm:px-6">
                         <p className="flex items-center text-sm text-gray-500">
                           No appointment
                         </p>
                       </div>
                     )}
-                    {appointments.map((appointment) => (
+                    {appointments?.map((appointment) => (
                       <li key={appointment.id}>
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">

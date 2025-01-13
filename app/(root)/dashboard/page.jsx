@@ -2,6 +2,7 @@ import AdminDashboard from "@/components/admin/admin";
 import ClientDashboard from "@/components/ClientDashboard";
 import DoctorDashboard from "@/components/DoctorDashboard";
 import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 import React from "react";
 
 async function Dashboard() {
@@ -14,7 +15,7 @@ async function Dashboard() {
   } = await supabase.auth.getUser();
 
   if (user?.user_metadata?.admin) {
-    return <AdminDashboard />;
+    return redirect("/admin");
   }
 
   const { data, error } = await supabase

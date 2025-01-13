@@ -45,13 +45,9 @@ export default async function RootLayout({ children }) {
     }
   }
 
-  if (user?.user_metadata?.admin) {
-    redirect("/dashboard");
-  }
-
   const { exists: isOnboarded, userData } = await checkUserAndGetData(user.id);
 
-  if (!isOnboarded) {
+  if (!isOnboarded && !user?.user_metadata?.admin) {
     redirect("/onboarding");
   }
 

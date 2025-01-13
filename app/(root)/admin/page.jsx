@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import {
   Users,
@@ -9,29 +11,55 @@ import {
   Settings,
   ShieldCheck,
   CreditCard,
-} from "lucide-react"; // Import more icons as needed
+} from "lucide-react";
 import Link from "next/link";
 
 const AdminDashboard = () => {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    newUsers: 0,
+    totalReports: 0,
+    activeUsers: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/admin/stats");
+        if (!response.ok) throw new Error("Failed to fetch stats");
+        const data = await response.json();
+        setStats(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const adminStats = [
     {
       title: "Total Users",
-      count: 5321,
+      count: stats.totalUsers,
       icon: <Users className="h-6 w-6 text-gray-400" />,
     },
     {
       title: "New Users Today",
-      count: 432,
+      count: stats.newUsers,
       icon: <UserPlus className="h-6 w-6 text-gray-400" />,
     },
     {
       title: "Total Reports",
-      count: 325,
+      count: stats.totalReports,
       icon: <FileText className="h-6 w-6 text-gray-400" />,
     },
     {
       title: "Active Users",
-      count: 4000,
+      count: stats.activeUsers,
       icon: <Activity className="h-6 w-6 text-gray-400" />,
     },
   ];
@@ -46,7 +74,7 @@ const AdminDashboard = () => {
     {
       title: "Review Reports",
       description: "Approve or reject medical reports.",
-      href: "/admin/reports",
+      href: "/medical-reports/view",
       icon: <FileText className="h-5 w-5 mr-2" />,
     },
     {
@@ -68,6 +96,17 @@ const AdminDashboard = () => {
       icon: <ShieldCheck className="h-5 w-5 mr-2" />,
     },
   ];
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-red-600">Error</h2>
+          <p className="mt-2 text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -102,7 +141,11 @@ const AdminDashboard = () => {
                                 {stat.title}
                               </dt>
                               <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                                {stat.count}
+                                {loading ? (
+                                  <div className="animate-pulse bg-gray-200 h-8 w-20 rounded" />
+                                ) : (
+                                  stat.count
+                                )}
                               </dd>
                             </dl>
                           </div>
