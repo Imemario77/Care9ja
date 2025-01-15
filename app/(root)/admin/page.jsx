@@ -78,23 +78,23 @@ const AdminDashboard = () => {
       icon: <FileText className="h-5 w-5 mr-2" />,
     },
     {
-      title: "Settings",
-      description: "Configure general application settings.",
-      href: "/admin/settings",
+      title: "Appointments",
+      description: "View appointments and Manage appointments.",
+      href: "/admin/appointments",
       icon: <Settings className="h-5 w-5 mr-2" />,
     },
-    {
-      title: "Payment Requests",
-      description: "Review and process payment requests.",
-      href: "/admin/payments",
-      icon: <CreditCard className="h-5 w-5 mr-2" />,
-    },
-    {
-      title: "Security Logs",
-      description: "Monitor system security and audit logs.",
-      href: "/admin/security",
-      icon: <ShieldCheck className="h-5 w-5 mr-2" />,
-    },
+    // {
+    //   title: "Payment Requests",
+    //   description: "Review and process payment requests.",
+    //   href: "/admin/payments",
+    //   icon: <CreditCard className="h-5 w-5 mr-2" />,
+    // },
+    // {
+    //   title: "Security Logs",
+    //   description: "Monitor system security and audit logs.",
+    //   href: "/admin/security",
+    //   icon: <ShieldCheck className="h-5 w-5 mr-2" />,
+    // },
   ];
 
   if (error) {

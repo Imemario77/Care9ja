@@ -9,7 +9,7 @@ import { formatDate } from "@/utils/functions";
 export default function AppointmentBooking({ user, doctors }) {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [appointmentType, setAppointmentType] = useState("");
+  const [appointmentType, setAppointmentType] = useState(user.appointment_type);
   const [notes, setNotes] = useState("");
   const [doctorId, setDoctorId] = useState("");
   const [error, setError] = useState("");
@@ -24,7 +24,6 @@ export default function AppointmentBooking({ user, doctors }) {
     const startDate = new Date(`${selectedDate}T${selectedTime}`);
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Assuming 1-hour appointment
 
-
     const startTime = formatDate(startDate);
     const endTime = formatDate(endDate);
 
@@ -35,7 +34,7 @@ export default function AppointmentBooking({ user, doctors }) {
       .from("doctorprofiles")
       .select("id")
       .eq("id", doctorId)
-      .single();
+      .single();  
 
     if (doctorError || !doctors) {
       toast.error("Doctor not found");
@@ -80,7 +79,7 @@ export default function AppointmentBooking({ user, doctors }) {
       .insert([
         {
           doctor_id: doctorId,
-          patient_id: user.id, // Replace with actual patient ID
+          patient_id: user.user_id, // Replace with actual patient ID
           start_time: startTime,
           end_time: endTime,
           appointment_type: appointmentType,
@@ -117,6 +116,26 @@ export default function AppointmentBooking({ user, doctors }) {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {error && <div className="text-red-500">{error}</div>}
                     {success && <div className="text-green-500">{success}</div>}
+                    <div>
+                      <label
+                        htmlFor="date"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        User
+                      </label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Calendar className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          className="focus:ring-sky-500 focus:border-sky-500 block w-full pl-10 py-3 outline-none sm:text-sm border-gray-300 rounded-md"
+                          value={user.user.full_name}
+                          readOnly
+                        />
+                      </div>
+                    </div>
+
                     <div>
                       <label
                         htmlFor="date"
@@ -206,8 +225,8 @@ export default function AppointmentBooking({ user, doctors }) {
                         >
                           <option value="">Select Doctor</option>
                           {doctors.map((doc) => (
-                            <option key={doc.doctor_id} value={doc.doctor_id}>
-                              {doc?.doctor?.user?.full_name}
+                            <option key={doc.id} value={doc.id}>
+                              {doc?.user?.full_name}
                             </option>
                           ))}
                         </select>
