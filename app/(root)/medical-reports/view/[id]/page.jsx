@@ -29,20 +29,26 @@ async function ViewSingle({ params: { id } }) {
     console.error("Failed to fetch medications:", error);
   }
 
-  console.log("error", error);
-
-  console.log(reportData);
+  console.log(user.user_metadata?.admin);
 
   if (reportData.doctor.user_id === user.id) {
     isDoc = true;
   } else if (reportData.patient_id === user.id) {
     isDoc = false;
+  } else if (user.user_metadata?.admin) {
+    isDoc = true;
   } else {
     redirect("/dashboard");
   }
 
   console.log(isDoc);
-  return <ViewSingleMedicalReport reportData={reportData} isDoc={isDoc} />;
+  return (
+    <ViewSingleMedicalReport
+      reportData={reportData}
+      isDoc={isDoc}
+      isAdmin={user.user_metadata?.admin}
+    />
+  );
 }
 
 export default ViewSingle;

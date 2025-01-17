@@ -10,6 +10,11 @@ async function Onboarding() {
     error,
   } = await supabase.auth.getUser();
 
+  console.log(user.user_metadata);
+  if (user.user_metadata.admin) {
+    redirect("/admin");
+  }
+
   async function checkIfUserIdExists(userId) {
     try {
       const { count, error } = await supabase

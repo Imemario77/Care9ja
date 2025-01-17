@@ -130,7 +130,7 @@ export default async function DoctorDashboard({
                             Pending Reports
                           </dt>
                           <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                            7
+                            0
                           </dd>
                         </dl>
                       </div>

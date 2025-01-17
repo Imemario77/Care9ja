@@ -6,6 +6,7 @@ async function View({ searchParams: { id } }) {
   const supabase = createClient();
 
   let isDoc = false;
+
   const {
     data: { user },
     error: err,
@@ -19,20 +20,24 @@ async function View({ searchParams: { id } }) {
       .limit(1)
       .single();
 
-    if (!doctor_account) {
+    if (!doctor_account && !user.user_metadata?.admin) {
       redirect("/doctors");
     }
-    isDoc = true;
-    const { data: chat_data, error: errf } = await supabase
-      .from("chats")
-      .select("*")
-      .eq("doctor_id", doctor_account.id)
-      .eq("patient_id", id)
-      .limit(1)
-      .single();
 
-    if (!chat_data) {
-      redirect("/dashboard");
+    isDoc = true;
+
+    if (doctor_account) {
+      const { data: chat_data, error: errf } = await supabase
+        .from("chats")
+        .select("*")
+        .eq("doctor_id", doctor_account.id)
+        .eq("patient_id", id)
+        .limit(1)
+        .single();
+
+      if (!chat_data) {
+        redirect("/dashboard");
+      }
     }
   }
 
@@ -45,7 +50,6 @@ async function View({ searchParams: { id } }) {
   if (error) {
     console.error("Failed to fetch medications:", error);
   }
-
 
   return (
     <ClientMedicationRecords

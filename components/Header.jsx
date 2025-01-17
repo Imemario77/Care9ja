@@ -41,7 +41,15 @@ export default function Header({ user }) {
           {/* Desktop menu */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {navItems.map((item) =>
-              user.user_type === "patient" && item.name !== "Patients" ? (
+              user?.user_type === "patient" && item.name !== "Patients" ? (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  {item.name}
+                </Link>
+              ) : user?.user_type === "doctor" && item.name !== "Doctors" ? (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -50,16 +58,13 @@ export default function Header({ user }) {
                   {item.name}
                 </Link>
               ) : (
-                user.user_type === "doctor" &&
-                item.name !== "Doctors" && (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  >
-                    {item.name}
-                  </Link>
-                )
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  {item.name}
+                </Link>
               )
             )}
             <div className="ml-3 relative">

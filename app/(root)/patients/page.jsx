@@ -5,6 +5,7 @@ import React from "react";
 
 async function MyPatients() {
   const supabase = createClient();
+  let patients = null;
 
   const {
     data: { user },
@@ -20,30 +21,44 @@ async function MyPatients() {
     .limit(1)
     .single();
 
-  if (doctor_account) {
-    dc_id = doctor_account.id;
+  if (doctor_account || user.user_metadata?.admin) {
+    dc_id = doctor_account?.id;
   } else {
     redirect("/doctors");
   }
 
-  const { data, error } = await supabase
-    .from("chats")
-    .select(
+  if (user.user_metadata?.admin) {
+    const { data, error } = await supabase.from("patientprofiles").select(
       `
-       user:patient_id (
+       user:user_id (
           full_name,
           profile_picture_url,
           id
         )
       `
-    )
-    .eq("doctor_id", dc_id);
+    );
 
-  console.log(data);
+    patients = data;
+  } else {
+    const { data, error } = await supabase
+      .from("chats")
+      .select(
+        `
+         user:patient_id (
+            full_name,
+            profile_picture_url,
+            id
+          )
+        `
+      )
+      .eq("doctor_id", dc_id);
+
+    patients = data;
+  }
 
   return (
     <div>
-      <DoctorPatientsList patients={data} />
+      <DoctorPatientsList patients={patients || []} />
     </div>
   );
 }

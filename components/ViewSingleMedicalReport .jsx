@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { parseTimestamp } from "@/utils/functions";
 
-const ViewSingleMedicalReport = ({ reportData, isDoc }) => {
+const ViewSingleMedicalReport = ({ reportData, isDoc, isAdmin }) => {
   const [report, setReport] = useState(reportData || {});
   const [editedReport, setEditedReport] = useState(reportData || {});
   const [loading, setLoading] = useState(false);
@@ -208,7 +208,9 @@ const ViewSingleMedicalReport = ({ reportData, isDoc }) => {
                             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 p-3 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm rounded-md"
                           >
                             <option value="Draft">Draft</option>
-                            <option value="Completed">Completed</option>
+                            {isAdmin && (
+                              <option value="Completed">Completed</option>
+                            )}
                           </select>
                         ) : (
                           <span

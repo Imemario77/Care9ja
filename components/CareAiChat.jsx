@@ -5,6 +5,7 @@ import { MessageCircle, X, Send, Image as ImageIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { generateDoctorResponse } from "@/app/actions/chatAi";
+import { usePathname } from "next/navigation";
 
 const CareAiChat = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -21,6 +22,7 @@ const CareAiChat = () => {
   const [imageType, setImageType] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const pathname = usePathname();
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
@@ -93,6 +95,10 @@ const CareAiChat = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  if (pathname !== "/admin" && !pathname.startsWith("/dashboard")) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
