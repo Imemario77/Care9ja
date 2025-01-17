@@ -55,7 +55,7 @@ export default async function RootLayout({ children }) {
     <main>
       <Header user={userData} />
       {children}
-      {/* <CareAiChat /> */}
+      <CareAiChat />
     </main>
   );
 }

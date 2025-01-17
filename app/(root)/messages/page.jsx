@@ -28,7 +28,16 @@ async function Chat({ searchParams: { id } }) {
   if (user.role === "service_role") {
     const { data: new_chat_data, error } = await supabase
       .from("chats")
-      .select("*")
+      .select(
+        `
+    id,
+    user:patient_id (
+          full_name,
+          profile_picture_url,
+          id
+          )
+  `
+      )
       .eq("admin_id", user.id);
 
     chat_data = new_chat_data;
@@ -91,6 +100,9 @@ async function Chat({ searchParams: { id } }) {
       .single();
     activeAccount = data;
   }
+
+  console.log("chat_data");
+  console.log(chat_data);
 
   return (
     <div className="h-screen  absolute top-0 w-full">

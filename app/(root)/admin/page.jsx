@@ -9,8 +9,6 @@ import {
   Activity,
   ArrowRight,
   Settings,
-  ShieldCheck,
-  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -83,18 +81,6 @@ const AdminDashboard = () => {
       href: "/admin/appointments",
       icon: <Settings className="h-5 w-5 mr-2" />,
     },
-    // {
-    //   title: "Payment Requests",
-    //   description: "Review and process payment requests.",
-    //   href: "/admin/payments",
-    //   icon: <CreditCard className="h-5 w-5 mr-2" />,
-    // },
-    // {
-    //   title: "Security Logs",
-    //   description: "Monitor system security and audit logs.",
-    //   href: "/admin/security",
-    //   icon: <ShieldCheck className="h-5 w-5 mr-2" />,
-    // },
   ];
 
   if (error) {

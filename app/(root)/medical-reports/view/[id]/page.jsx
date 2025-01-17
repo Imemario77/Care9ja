@@ -42,7 +42,13 @@ async function ViewSingle({ params: { id } }) {
   }
 
   console.log(isDoc);
-  return <ViewSingleMedicalReport reportData={reportData} isDoc={isDoc} />;
+  return (
+    <ViewSingleMedicalReport
+      reportData={reportData}
+      isDoc={isDoc}
+      isAdmin={user.user_metadata?.admin}
+    />
+  );
 }
 
 export default ViewSingle;

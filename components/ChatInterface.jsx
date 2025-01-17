@@ -30,6 +30,8 @@ export default function ChatInterface({ accounts, activeAccount, userId }) {
   const router = useRouter();
   const supabase = createClient();
 
+  console.log(selectedAccount);
+
   useEffect(() => {
     if (userId) {
       const channel = supabase.channel("online-users");

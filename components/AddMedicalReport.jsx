@@ -164,7 +164,7 @@ const AddMedicalReport = ({ doctorId, patients }) => {
                     onChange={handleInputChange}
                   >
                     <option value="Draft">Draft</option>
-                    <option value="Completed">Completed</option>
+                    {!doctorId && <option value="Completed">Completed</option>}
                   </select>
                 </div>
 
