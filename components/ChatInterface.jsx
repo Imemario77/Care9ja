@@ -538,7 +538,7 @@ const AccountButton = ({
             "/default-profile.jpeg"
           }
           alt={`${
-            account.user?.user?.full_name || account.user.full_name
+            account.user?.user?.full_name || account.user?.full_name
           }'s profile`}
           onError={(e) => {
             e.target.onerror = null;
@@ -555,7 +555,7 @@ const AccountButton = ({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">
-          {account.user?.user?.full_name || account.user.full_name}
+          {account.user?.user?.full_name || account.user?.full_name}
         </p>
         <p className="text-sm text-gray-500 truncate">
           {account.user?.specialization}
